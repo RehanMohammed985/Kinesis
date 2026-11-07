@@ -54,19 +54,26 @@ def main():
     ap.add_argument("--perm", type=int, default=200, help="label shuffles for the p-value")
     ap.add_argument("--save")
     a = ap.parse_args()
-    Xs, ys, Rs, words = [], [], [], None
+    Xs, ys, gs, Rs, words = [], [], [], [], None
     for f in a.files:
         eeg, markers, meta = load(f)
         words = words or meta["words"]
-        X, y, R = W.epochs_from_markers(eeg, markers, len(words))
-        print(f"{Path(f).name}: {len(X)} trials ({', '.join(f'{w} {int((y == i).sum())}' for i, w in enumerate(words))}), {len(R)} rest")
+        first = int(np.concatenate(gs).max()) + 1 if gs else 0
+        X, y, g, R = W.epochs_from_markers(eeg, markers, len(words), seconds=meta.get("go_seconds", W.EPOCH_S), first_trial=first)
+        n_tr = len(set(g.tolist()))
+        print(f"{Path(f).name}: {n_tr} trials ({', '.join(f'{w} {len(set(g[y == i].tolist()))}' for i, w in enumerate(words))}), "
+              f"{len(X)} two-second pieces, {len(R)} rest")
         Xs.append(X)
         ys.append(y)
+        gs.append(g)
         if len(R):
             Rs.append(R)
-    X, y = np.concatenate(Xs), np.concatenate(ys)
-    print(f"\n{' vs '.join(words)}: {len(X)} trials, mode {meta['mode']}")
-    res = W.evaluate(X, y, n_perm=a.perm)
+    X, y, g = np.concatenate(Xs), np.concatenate(ys), np.concatenate(gs)
+    print(f"\n{' vs '.join(words)}: {len(set(g.tolist()))} trials, mode {meta['mode']}")
+    per_word = [len(set(g[y == i].tolist())) for i in range(len(words))]
+    if min(per_word) < 10:
+        print(f"  only {min(per_word)} trials for one word: too few to show anything either way, record at least 15 each")
+    res = W.evaluate(X, y, g, n_perm=a.perm)
     for name, r in res.items():
         print(f"  {name:10s} accuracy {r['accuracy']:.0%}   chance {r['chance']:.0%}   p = {r['p']:.3f}   -> {verdict(r)}")
     if Rs:
@@ -74,12 +81,12 @@ def main():
         n = min(len(R), len(X))
         Xr = np.concatenate([X[:n], R[:n]])
         yr = np.array([1] * n + [0] * n)
-        rr = W.evaluate(Xr, yr, n_perm=min(a.perm, 100))
+        rr = W.evaluate(Xr, yr, None, n_perm=min(a.perm, 100))
         best = max(rr.values(), key=lambda r: r["accuracy"])
         print(f"\nany word vs rest: {best['accuracy']:.0%} (chance {best['chance']:.0%}, p = {best['p']:.3f}) -> {verdict(best)}")
     if a.save:
         name = max(res, key=lambda k: res[k]["accuracy"])
-        clf = W.classifiers()[name].fit(X, y)
+        clf = W.classifiers()[name].fit(X, y)  # pieces of all trials
         Path(a.save).parent.mkdir(parents=True, exist_ok=True)
         Path(a.save).write_bytes(pickle.dumps({"words": words, "classifier": name, "model": clf, "scores": res}))
         print(f"\nsaved {name} model -> {a.save}")

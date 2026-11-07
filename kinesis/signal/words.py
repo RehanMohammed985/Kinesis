@@ -40,20 +40,26 @@ def to_fs(x, fs_in, fs_out=FS):
     return resample_poly(x, f.numerator, f.denominator, axis=-1)
 
 
-def epochs_from_markers(eeg, markers, n_words, fs=FS, seconds=EPOCH_S, lo=1.0, hi=55.0):
+def epochs_from_markers(eeg, markers, n_words, fs=FS, seconds=EPOCH_S, lo=1.0, hi=55.0, first_trial=0):
     """eeg: channels x samples, markers: per-sample marker row (0 = none).
-    Returns X (trials x channels x samples), y (word index), rest epochs."""
+    A GO window longer than 2 s is cut into 2 s pieces that share a trial id.
+    Returns X (pieces x channels x samples), y (word index), trial ids, rest epochs."""
     x = bandpass(eeg - eeg.mean(axis=1, keepdims=True), lo, hi, fs)
-    n = int(seconds * fs)
-    X, y, R = [], [], []
+    n = int(EPOCH_S * fs)
+    pieces = max(1, int(seconds // EPOCH_S))
+    X, y, g, R = [], [], [], []
+    trial = first_trial
     for i in np.flatnonzero(markers):
         m = int(round(markers[i]))
-        if M_GO0 <= m < M_GO0 + n_words and i + n <= x.shape[1]:
-            X.append(x[:, i:i + n])
-            y.append(m - M_GO0)
+        if M_GO0 <= m < M_GO0 + n_words and i + pieces * n <= x.shape[1]:
+            for k in range(pieces):
+                X.append(x[:, i + k * n:i + (k + 1) * n])
+                y.append(m - M_GO0)
+                g.append(trial)
+            trial += 1
         elif m == M_REST and i + n <= x.shape[1]:
             R.append(x[:, i:i + n])
-    return np.array(X), np.array(y), np.array(R)
+    return np.array(X), np.array(y), np.array(g), np.array(R)
 
 
 def bandpower_features(X, fs=FS):
@@ -79,17 +85,35 @@ def classifiers():
     }
 
 
-def evaluate(X, y, n_perm=200, folds=5, seed=0):
-    """Cross-validated accuracy for each classifier, with a permutation p-value."""
-    from sklearn.model_selection import StratifiedKFold, cross_val_score, permutation_test_score
+def evaluate(X, y, groups=None, n_perm=200, folds=5, seed=0):
+    """Cross-validated accuracy for each classifier, with a permutation p-value.
+    Pieces of the same trial (same group) are always kept on the same side of
+    a split, and the permutation shuffles whole-trial labels."""
+    from sklearn.base import clone
+    from sklearn.model_selection import StratifiedGroupKFold
+    groups = np.arange(len(y)) if groups is None else np.asarray(groups)
+    ug = np.unique(groups)
+    glab = np.array([y[groups == u][0] for u in ug])
+    k = int(min(folds, np.bincount(glab).min()))
+    if k < 2:
+        return {name: {"accuracy": float("nan"), "chance": float("nan"), "p": None} for name in classifiers()}
+    rng = np.random.default_rng(seed)
+
+    def acc(clf, yy):
+        # splits are re-drawn for each labelling so every fold stays balanced;
+        # fixed splits with shuffled labels make chance look lower than it is
+        hit = 0
+        for tr, te in StratifiedGroupKFold(k, shuffle=True, random_state=seed).split(X, yy, groups):
+            hit += int((clone(clf).fit(X[tr], yy[tr]).predict(X[te]) == yy[te]).sum())
+        return hit / len(yy)
+
     out = {}
-    k = int(min(folds, np.bincount(y).min()))
-    cv = StratifiedKFold(k, shuffle=True, random_state=seed)
     for name, clf in classifiers().items():
-        if n_perm:
-            score, perm, p = permutation_test_score(clf, X, y, cv=cv, n_permutations=n_perm, random_state=seed, n_jobs=-1)
-            out[name] = {"accuracy": float(score), "chance": float(np.mean(perm)), "p": float(p)}
-        else:
-            s = cross_val_score(clf, X, y, cv=cv)
-            out[name] = {"accuracy": float(s.mean()), "chance": 1 / len(set(y)), "p": None}
+        real = acc(clf, y)
+        perm = []
+        for _ in range(n_perm):
+            shuffled = dict(zip(ug, rng.permutation(glab)))
+            perm.append(acc(clf, np.array([shuffled[u] for u in groups])))
+        p = (1 + sum(v >= real for v in perm)) / (1 + len(perm)) if perm else None
+        out[name] = {"accuracy": real, "chance": float(np.mean(perm)) if perm else 1 / len(ug), "p": p, "trials": len(ug)}
     return out
