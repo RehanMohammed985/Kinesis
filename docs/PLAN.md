@@ -9,11 +9,10 @@ Your list: nodes, calibration, coupling, signal processing, data collection, ML/
 ### 1. Nodes (branch `nodes`)
 Hardware and the board stream. Everything else reads from this.
 - Electrodes screwed into the lattice, wired to the positive rail, switches away from header (see HARDWARE.md)
-- Visualizer contact check passes: eyes-closed alpha on ch 1-4, blink spikes on 5-6, clench spike on 7
+- Visualizer contact check passes: eyes-closed alpha on ch 1-4, blink spike on 5, clench spike on 6
 - `kinesis/board/knight.py`: opens the port, runs the enable sequence (start_stream, 2 s, per channel `chon_N_<gain>` then `rldadd_N` with the documented pauses), exposes `latest(n_samples)` and `start_recording(path)`
 - `--synthetic` flag uses BrainFlow SYNTHETIC_BOARD so every other branch can code without the headset
-- If the box is the IMU variant: board id 66, expose accel rows for motion gating
-- Done when: `python scripts/smoke_stream.py --port ...` prints 8 live channels in microvolts and writes a CSV
+- Done when: `python scripts/smoke_stream.py --port ...` prints 6 live channels in microvolts and writes a CSV
 
 ### 2. Calibration (branch `calibration`)
 Per-person thresholds and Probe.

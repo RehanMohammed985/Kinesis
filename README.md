@@ -2,12 +2,12 @@
 
 Kinesis lets anyone with a motor or speech impairment run their life with their mind: talk, call people, control their phone, navigate reading and media, log what their body is doing, and send that record to their physician. One personal device, one app, a 5-minute setup.
 
-One $350 headset (NeuroPawn Knight, 8-channel EEG) plus the phone the person already owns. Three ways in, one way out.
+One $350 headset (NeuroPawn Knight EEG board, 6 electrodes) plus the phone the person already owns. Three ways in, one way out.
 
 **Inputs**
 - Visual attention response: stare at one of four flickering tiles (SSVEP, occipital channels)
 - Deliberate muscle activity: jaw clench (EMG, temporal channel)
-- Eye-related signals: double blink (EOG, Fp1/Fp2) and eyes-closed alpha burst (occipital)
+- Eye-related signals: double blink (EOG, Fp1) and eyes-closed alpha burst (occipital)
 
 **Outputs**
 - Speak: a user-selected message in the user's own cloned voice

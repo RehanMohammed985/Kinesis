@@ -30,7 +30,7 @@ A detector fired. `input` is one of `clench`, `blink2` (double blink), `alpha` (
 {"type": "quality", "channels": [
   {"ch": 1, "site": "Oz", "state": "good", "reason": "ok"},
   {"ch": 2, "site": "O1", "state": "fair", "reason": "noise", "prompt": "Press O1 down a quarter turn"},
-  {"ch": 5, "site": "Fp1", "state": "bad", "reason": "flat", "prompt": "Fp1 is not touching skin. Move it into a part line."}
+  {"ch": 6, "site": "T7", "state": "bad", "reason": "flat", "prompt": "T7 is not touching skin. Move it into a part line."}
 ]}
 ```
 `state` is `good`, `fair`, or `bad`. `reason` is `ok`, `flat`, `railed`, `noise`, or `no_alpha`.
