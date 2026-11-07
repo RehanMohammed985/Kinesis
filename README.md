@@ -1,8 +1,8 @@
 # Kinesis
 
-Kinesis helps people with limited movement or speech communicate, participate in classrooms and workplaces, and navigate digital content through an affordable headset and interface.
+Kinesis lets anyone with a motor or speech impairment run their life with their mind: talk, call people, control their phone, navigate reading and media, log what their body is doing, and send that record to their physician. One personal device, one app, a 5-minute setup.
 
-One $350 headset (NeuroPawn Knight, 8-channel EEG) plus the phone or laptop the person already owns. Three ways in, one way out.
+One $350 headset (NeuroPawn Knight, 8-channel EEG) plus the phone the person already owns. Three ways in, one way out.
 
 **Inputs**
 - Visual attention response: stare at one of four flickering tiles (SSVEP, occipital channels)
@@ -10,11 +10,15 @@ One $350 headset (NeuroPawn Knight, 8-channel EEG) plus the phone or laptop the 
 - Eye-related signals: double blink (EOG, Fp1/Fp2) and eyes-closed alpha burst (occipital)
 
 **Outputs**
-- A user-selected message, spoken in the user's own cloned voice
-- A keypress into the OS accessibility layer (Switch Control / Switch Access), so any app, e-reader, or media player works
-- A request shared with a teacher or manager. Only the selected message leaves the device. Never raw EEG, never inferred mental state.
+- Speak: a user-selected message in the user's own cloned voice
+- Call: phone a chosen contact, answer or decline an incoming call
+- Control: a keypress into the OS accessibility layer (Switch Control / Switch Access), so any app, e-reader, or media player works
+- Share: a request sent to a caregiver, family member, or employer
+- Report: a daily log (usage, calibration drift, eyes-closed rest periods, Fit quality) the user chooses to send to their physician
 
-**Calibration**: a 2-minute set of cued actions sets per-person thresholds and picks the cleanest input. Re-run any time.
+Only user-selected messages and user-approved reports leave the device. Never raw EEG, never inferred mental state.
+
+**Setup (5 minutes)**: Fit (90 s contact check) then Calibration (a 2-minute set of cued actions that sets per-person thresholds and picks the cleanest input). Re-run any time; the device follows the person as their condition changes.
 
 **Fit**: a 90-second per-electrode contact check with placement guidance, including for braids, locs, and coily hair.
 
@@ -25,10 +29,10 @@ kinesis/
   board/        Knight board wrapper, synthetic fallback, recording      (nodes)
   calibration/  cued baseline + Probe (which input works for this person)  (calibration)
   signal/       detectors: ssvep, emg, blink, alpha; Fit quality scorer    (signal-processing)
-  coupling/     outputs: keypress, TTS/voice, message to teacher           (coupling)
+  coupling/     outputs: keypress, TTS/voice, call, share, physician report (coupling)
   agent/        Gemini phrase prediction, conversation context             (ml-agent)
   data/         recorder, dataset loaders, replay harness                  (data-collection)
-app/            React UI: message board, tiles, Fit map, calibration flow  (react)
+app/            React UI: board, tiles, calls, Fit map, setup flow, reports  (react)
 scripts/        smoke tests and run scripts
 docs/           PLAN.md (the report), HARDWARE.md, DATASETS.md, workstreams/
 data/           raw recordings (gitignored except .gitkeep)
