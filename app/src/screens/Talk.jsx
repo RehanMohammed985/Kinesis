@@ -18,12 +18,13 @@ export default function Talk() {
   const [listening, setListening] = useState(false)
   const [round, setRound] = useState(0)
   const sample = useRef(0)
+  const coreReplies = useRef(false)
 
   const ask = useCallback(
     async (h) => {
       setHeard(h)
       if (CANNED_REPLIES[h.text] && !k.server.replies) { setReplies(CANNED_REPLIES[h.text]); setRound((r) => r + 1); return }
-      if (k.mode === 'core') return // core will send replies
+      if (coreReplies.current) return // the core's agent is answering
       try {
         const r = await fetch('/api/replies', {
           method: 'POST',
@@ -38,13 +39,13 @@ export default function Talk() {
       }
       setRound((r) => r + 1)
     },
-    [k.server.replies, k.mode],
+    [k.server.replies],
   )
 
   // the room mic, through the browser's speech recognition
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR || k.mode === 'core') return
+    if (!SR) return
     const rec = new SR()
     rec.continuous = true
     rec.interimResults = false
@@ -57,14 +58,14 @@ export default function Talk() {
     }
     try { rec.start() } catch { /* mic not allowed */ }
     return () => { rec.onend = null; try { rec.stop() } catch { /* already stopped */ } }
-  }, [ask, k.mode])
+  }, [ask])
 
   // the core's own mic and agent
   useEffect(
     () =>
       k.subscribe((msg) => {
         if (msg.type === 'heard') setHeard({ speaker: msg.speaker || 'Someone nearby', text: msg.text })
-        if (msg.type === 'replies') { setReplies(msg.items.slice(0, 4)); setRound((r) => r + 1) }
+        if (msg.type === 'replies') { coreReplies.current = true; setReplies(msg.items.slice(0, 4)); setRound((r) => r + 1) }
       }),
     [k],
   )
@@ -78,7 +79,7 @@ export default function Talk() {
       id: 'more', area: 'more', kind: 'quiet', glyph: 'more', label: 'Different replies',
       onSelect: () => {
         sample.current = (sample.current + 1) % HEARD_SAMPLES.length
-        if (k.mode === 'core') k.send({ type: 'replies_again' })
+        if (coreReplies.current) k.send({ type: 'replies_again' })
         else ask(listening && heard.speaker === 'Someone nearby' ? heard : HEARD_SAMPLES[sample.current])
       },
     },

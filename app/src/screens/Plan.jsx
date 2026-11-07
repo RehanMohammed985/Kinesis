@@ -14,6 +14,7 @@ export default function Plan({ task = 'refill' }) {
   const [phase, setPhase] = useState('review') // review | running | done
   const [status, setStatus] = useState([]) // per step: undefined | 'running' | 'done'
   const asked = useRef(false)
+  const coreRuns = useRef(false) // true once the core's agent sends a plan or step
 
   // ask the core's agent for a real plan; keep the local one if it does not answer
   useEffect(() => {
@@ -25,6 +26,7 @@ export default function Plan({ task = 'refill' }) {
   useEffect(
     () =>
       k.subscribe((msg) => {
+        if (msg.type === 'plan' || msg.type === 'step') coreRuns.current = true
         if (msg.type === 'plan') setPlan({ id: msg.id, title: msg.title, steps: msg.steps.map((s) => (typeof s === 'string' ? { what: s } : s)) })
         if (msg.type === 'step') {
           setStatus((st) => { const n = [...st]; n[msg.index] = msg.status; return n })
@@ -36,7 +38,7 @@ export default function Plan({ task = 'refill' }) {
 
   // simulator: run the steps
   useEffect(() => {
-    if (phase !== 'running' || k.mode === 'core') return
+    if (phase !== 'running' || coreRuns.current) return
     let i = 0
     const timers = []
     const next = () => {
@@ -54,8 +56,8 @@ export default function Plan({ task = 'refill' }) {
   }, [phase]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (k.mode === 'core' && phase === 'running' && status.length === plan.steps.length && status.every((s) => s === 'done')) setPhase('done')
-  }, [status, phase, plan.steps.length, k.mode])
+    if (coreRuns.current && phase === 'running' && status.length === plan.steps.length && status.every((s) => s === 'done')) setPhase('done')
+  }, [status, phase, plan.steps.length])
 
   const items =
     phase === 'review'
