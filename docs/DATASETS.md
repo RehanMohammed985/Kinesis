@@ -2,6 +2,9 @@
 
 Kinesis does not need a trained model to work. Every detector is a threshold or a per-person template. Datasets are for three things: validating detectors before the headset is wired, cutting SSVEP calibration time, and producing the numbers on the results slide.
 
+## Status (Nov 7)
+Three baseline trials are in (see kinesis/data/baseline/README.md). Clench: 43 detected for 42 clear clenches, 0 false triggers. Record with scripts/record.py from now on: looping get_current_board_data() and appending saves every sample about 60 times.
+
 ## Priority 1: our own recordings (most of the value)
 - Record every calibration and every demo run with `kinesis/data/recorder.py` (BrainFlow write_file + JSON sidecar with cue timestamps).
 - Build `replay.py` on BrainFlow's PLAYBACK_FILE_BOARD so detectors run on recordings exactly as live.
