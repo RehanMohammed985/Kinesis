@@ -6,8 +6,8 @@ import Board from '../ui/Board.jsx'
 
 // Look mode (SSVEP). Each tile flickers at its own rate; the visual cortex
 // follows whichever one the person looks at, and the core reads it from the
-// occipital sensors. Frequencies match NeuroPawn's SSVEP code and need a
-// 60 Hz display. Shown only after a photosensitivity notice.
+// occipital sensors (kinesis/signal/ssvep.py, no training needed). Rates need
+// a 60 Hz display. Shown only after a photosensitivity notice.
 export default function Look() {
   const { go } = useNav()
   const [started, setStarted] = useState(false)
@@ -21,7 +21,7 @@ export default function Look() {
         <div className="notice">
           <h1 className="screen-title">Look to choose</h1>
           <p className="screen-lede" style={{ margin: 0 }}>
-            Four squares will flash at slightly different speeds, between 6 and 12 times a second. Look at one and Kinesis reads which from the back of your head. Do not use this if flashing light has ever caused you a seizure or migraine.
+            Four squares will flash at slightly different speeds, between 8 and 15 times a second. Look at one and Kinesis reads which from the back of your head. Do not use this if flashing light has ever caused you a seizure or migraine.
           </p>
         </div>
         <Board scanKey="look-notice" items={items} layout={{ columns: '1fr 1fr', rows: '1fr', areas: '"a b"' }} onHelp={() => go('help')} onBack={() => go('home')} />
@@ -48,6 +48,12 @@ function Tiles() {
       else { k.act({ action: 'speak', text: t.label }); k.say(`Said: ${t.label}`) }
     }, 450)
   }
+
+  // tell the core to start reading which square is being looked at
+  useEffect(() => {
+    k.send({ type: 'look', on: true })
+    return () => k.send({ type: 'look', on: false })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(
     () =>

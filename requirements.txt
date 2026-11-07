@@ -8,3 +8,5 @@ requests
 python-dotenv
 # SSVEP (optional, from NeuroPawn's repo): psychopy, meegkit
 # data team: moabb
+scikit-learn
+pyriemann

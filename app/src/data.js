@@ -160,9 +160,11 @@ export const ROLES = {
   rest: 'pauses',
 }
 
+// Order and rates must match FREQS in kinesis/signal/ssvep.py. Each rate is
+// a whole number of 60 Hz frames per cycle (7, 6, 5, 4), so it draws exactly.
 export const LOOK_TILES = [
-  { label: 'Yes', hz: 6.67 },
-  { label: 'No', hz: 8.57 },
-  { label: 'Help', hz: 10 },
-  { label: 'Call Sam', hz: 12 },
+  { label: 'Yes', hz: 8.57 },
+  { label: 'No', hz: 10 },
+  { label: 'Help', hz: 12 },
+  { label: 'Call Sam', hz: 15 },
 ]
