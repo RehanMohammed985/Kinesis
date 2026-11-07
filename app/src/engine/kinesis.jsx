@@ -21,8 +21,8 @@ const initialQuality = () =>
 
 // What the simulator pretends each electrode reads once powered on.
 const SIM_READINGS = {
-  2: { state: 'fair', reason: 'noise', prompt: 'O1 is picking up noise. Press it down a quarter turn.' },
-  6: { state: 'bad', reason: 'flat', prompt: 'Fp2 is not touching skin. Move it a few millimeters into a part line.' },
+  2: { state: 'fair', reason: 'noise', prompt: 'Press it down a quarter turn.' },
+  6: { state: 'bad', reason: 'flat', prompt: 'Move it a few millimeters into a part line.' },
 }
 
 export function KinesisProvider({ children }) {

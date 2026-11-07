@@ -131,9 +131,8 @@ export const REPORT = {
 
 export const SENSORS = [
   // site, board channel, position on the head map (0..1, top is the nose)
-  { ch: 5, site: 'Fp1', x: 0.4, y: 0.16 },
-  { ch: 6, site: 'Fp2', x: 0.6, y: 0.16 },
-  { ch: 7, site: 'T7', x: 0.1, y: 0.5 },
+  { ch: 5, site: 'Fp1', x: 0.42, y: 0.16 },
+  { ch: 6, site: 'T7', x: 0.1, y: 0.5 },
   { ch: 4, site: 'POz', x: 0.5, y: 0.73 },
   { ch: 2, site: 'O1', x: 0.38, y: 0.86 },
   { ch: 1, site: 'Oz', x: 0.5, y: 0.9 },
