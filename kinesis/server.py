@@ -3,6 +3,11 @@ over ws://localhost:8765 (docs/PROTOCOL.md).
 
 python -m kinesis.server --port /dev/cu.usbmodemXXXX
 python -m kinesis.server --synthetic          # no headset
+python -m kinesis.server --port ... --rules    # fixed rules, no learned gestures
+
+Clench and double blink come from the person's learned model
+(kinesis/signal/learned.py): trained in the app's calibration and saved to
+data/gesture_model.json; until then the team model in kinesis/data/gestures/.
 
 Every session is recorded to data/sessions/ for the data team.
 """
@@ -18,7 +23,12 @@ from scipy.signal import resample
 
 from kinesis.agent.hub import Hub
 from kinesis.board.knight import Knight
+from kinesis.signal import learned as gl
 from kinesis.signal.live import FS, Detectors, quality
+
+WIN = int(1.2 * FS)
+PERSONAL_MODEL = Path("data/gesture_model.json")
+TEAM_MODEL = Path(__file__).with_name("data") / "gestures" / "model.json"
 
 clients = set()
 
@@ -38,6 +48,8 @@ async def main():
     # open http://<app-laptop>:5173/?core=ws://<this-laptop-ip>:8765
     ap.add_argument("--host", default="0.0.0.0")
     ap.add_argument("--ws-port", type=int, default=8765)
+    ap.add_argument("--model", help="gesture model json (default: data/gesture_model.json, then the team model)")
+    ap.add_argument("--rules", action="store_true", help="fixed rules only, no learned gestures")
     args = ap.parse_args()
     if not args.synthetic and not args.port:
         ap.error("--port or --synthetic required")
@@ -52,6 +64,15 @@ async def main():
     print(f"Recording to {rec}")
 
     det = Detectors()
+    gest = {"det": None, "source": "rules"}
+    if not args.rules:
+        for path in (args.model, PERSONAL_MODEL, TEAM_MODEL):
+            if path and Path(path).exists():
+                gest["det"] = gl.LearnedDetectors(gl.GestureModel.load(path), det)
+                gest["source"] = str(path)
+                print(f"Gestures: learned model {path} (channels {gest['det'].model.chans})")
+                break
+    cal = {"step": None, "c": None}
     loop = asyncio.get_running_loop()
 
     def emit(msg):
@@ -86,7 +107,7 @@ async def main():
 
     async def handler(ws):
         clients.add(ws)
-        await ws.send(json.dumps({"type": "hello", "board": "knight", "synthetic": args.synthetic, "fs": FS, "profile": profile}))
+        await ws.send(json.dumps({"type": "hello", "board": "knight", "synthetic": args.synthetic, "fs": FS, "profile": profile, "gestures": gest["source"]}))
         try:
             async for raw in ws:
                 try:
@@ -94,9 +115,18 @@ async def main():
                 except ValueError:
                     continue
                 kind = msg.get("type")
-                if kind == "calibrate" and msg.get("step") == "rest":
-                    state["rest_until"] = time.time() + 5
-                    board.mark(1)
+                if kind == "calibrate":
+                    step = msg.get("step")
+                    if step == "rest":
+                        state["rest_until"] = time.time() + 5
+                        board.mark(1)
+                        cal["step"], cal["c"] = "rest", None
+                    elif step in ("clench", "blink2"):
+                        board.mark(2 if step == "clench" else 3)
+                        cal["step"] = step
+                    else:  # the switch steps are over: learn this person's gestures
+                        cal["step"] = None
+                        await train_gestures()
                 elif kind == "fit":
                     state["fit"] = True
                 elif kind == "demo_seizure":
@@ -109,6 +139,21 @@ async def main():
                     loop.run_in_executor(None, hub.handle, msg)
         finally:
             clients.discard(ws)
+
+    async def train_gestures():
+        c = cal["c"]
+        if c is None or args.rules:
+            return
+        model, info = c.train()
+        if model is None:
+            print("Gestures: not enough clean attempts to learn from", info)
+            await broadcast({"type": "calibration", "step": "model", "ok": False, "frames": info})
+            return
+        model.save(PERSONAL_MODEL)
+        gest["det"] = gl.LearnedDetectors(model, det)
+        gest["source"] = str(PERSONAL_MODEL)
+        print("Gestures: learned this person's clench and double blink", info)
+        await broadcast({"type": "calibration", "step": "model", "ok": True, **info})
 
     async with websockets.serve(handler, args.host, args.ws_port):
         import socket
@@ -132,11 +177,24 @@ async def main():
             if state["rest_until"] and now >= state["rest_until"]:
                 rest = read(int(4.5 * FS))[0]
                 base = det.calibrate_rest(rest)
+                if gest["det"]:
+                    gest["det"].calibrate_rest(rest)
+                if cal["step"] == "rest":  # calibration: start collecting this person's gestures
+                    c = gl.Calibrator(gl.active_channels(rest))
+                    for i in range(WIN, rest.shape[1] + 1, 6):
+                        c.add_rest(gl.raw_features(rest[:, i - WIN:i], c.model.chans))
+                    cal["c"] = c
                 hub.monitor.set_baseline(rest)
                 state["rest_until"] = 0
                 print("Baseline set:", {k: round(float(v), 2) for k, v in base.items()})
                 await broadcast({"type": "calibration", "step": "rest", "progress": 1})
-            levels, events = det.update(eeg[:, -int(1.2 * FS):])
+            levels, events = (gest["det"] or det).update(eeg[:, -WIN:], now)
+            if cal["step"] in ("clench", "blink2") and cal["c"] is not None:
+                # calibration: count attempts for the app, keep frames to learn from
+                events = []
+                f = gl.raw_features(eeg[:, -WIN:], cal["c"].model.chans)
+                if cal["c"].add(f, cal["step"]):
+                    events = [{"type": "event", "input": cal["step"]}]
             if args.synthetic:
                 events = []  # synthetic data is meaningless for switches
             await broadcast({"type": "levels", **levels})

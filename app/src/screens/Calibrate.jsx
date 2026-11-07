@@ -5,11 +5,12 @@ import { LEVEL_KEY, useKinesis } from '../engine/kinesis.jsx'
 
 // Calibration: four cued actions, then a ranking of which input this person
 // does most cleanly. The best one chooses, the next one goes back, eyes
-// closed pauses. Under two minutes.
+// closed pauses. Under two minutes. With the headset on, the core learns this
+// person's own clench and double blink from these steps (kinesis/signal/learned.py).
 const STEPS = [
   { id: 'rest', label: 'Stay still', cue: 'Stay still and relaxed', hint: 'This sets the quiet level for every sensor.', seconds: 6 },
-  { id: 'clench', label: 'Clench', cue: 'Clench your jaw', hint: 'Clench firmly, then let go. Three times.', need: 3, input: 'clench' },
-  { id: 'blink2', label: 'Double blink', cue: 'Blink twice', hint: 'Two quick blinks, three times.', need: 3, input: 'blink2' },
+  { id: 'clench', label: 'Clench', cue: 'Clench your jaw', hint: 'Clench firmly, then let go. Five times, a breath apart.', need: 5, input: 'clench' },
+  { id: 'blink2', label: 'Double blink', cue: 'Blink twice', hint: 'Two quick blinks, then pause. Five times.', need: 5, input: 'blink2' },
   { id: 'alpha', label: 'Eyes closed', cue: 'Close your eyes', hint: 'Keep them closed until you hear the tone.', need: 1, input: 'alpha' },
 ]
 

@@ -50,6 +50,7 @@ Recording, replay, and public datasets. Two people on this.
 
 ### 6. ML / agent (branch `ml-agent`)
 Phrase prediction, the conversation loop, and the task agent. The agent is what turns one slow selection into many actions.
+- `kinesis/signal/learned.py`: per-person gesture model. The calibration steps (still, clench x5, double blink x5) train a shrinkage LDA on 22 log-power features in under a second; `scripts/train_gestures.py` tests it leave-one-trial-out on our recordings.
 - `actions.py`: the action registry. The agent may only call these, each with a confirm rule:
 
   | Action | Params | Confirm before running |

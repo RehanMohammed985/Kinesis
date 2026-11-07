@@ -13,6 +13,10 @@ What the recordings taught us:
 - Clenches throw big spikes onto Fp1, so blinks are ignored while clenching.
 - Eyes-closed alpha was weak with this fit; alpha uses the median across the
   occipital channels and is ignored while clenching.
+
+These rules are the fallback. On our double-blink recordings they missed
+every double blink, so clench and double blink now come from each person's
+learned model (learned.py); eyes closed still comes from here.
 """
 import time
 
