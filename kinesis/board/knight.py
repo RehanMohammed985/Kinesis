@@ -11,10 +11,11 @@ import numpy as np
 from brainflow.board_shim import BoardIds, BoardShim, BrainFlowInputParams
 
 # Channel plan, see docs/HARDWARE.md. Index = board channel number.
-MONTAGE = {1: "Oz", 2: "O1", 3: "O2", 4: "POz", 5: "Fp1", 6: "Fp2", 7: "T7"}
-OCCIPITAL = [1, 2, 3, 4]
-FRONTAL = [5, 6]
-TEMPORAL = [7]
+# Our kit has 6 electrodes and a standard (non-IMU) Knight board.
+MONTAGE = {1: "Oz", 2: "O1", 3: "O2", 4: "POz", 5: "Fp1", 6: "T7"}
+OCCIPITAL = [1, 2, 3, 4]   # look tiles (SSVEP), eyes-closed alpha on 1-3
+FRONTAL = [5]              # double blink
+TEMPORAL = [6]             # jaw clench
 
 
 class Knight:

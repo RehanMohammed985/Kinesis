@@ -1,23 +1,24 @@
 # Hardware setup
 
 ## What is in the box
-Lattice headset with chin strap, Knight board on an Arduino, USB-C cable, dry spike recording electrodes (expect 7-8 streaming), comfort padding electrodes (foam, no signal, for tension), one ear-clip ground that plugs into both RLD and COMM, conductive paste, paper quick start. Check the box label: if it says IMU, the board is the IMU variant (BrainFlow id 66) and we get accelerometer and gyro for free.
+Lattice headset with chin strap, standard Knight board (not IMU, BrainFlow id 57) on an Arduino, USB-C cable, 6 dry spike recording electrodes, comfort padding electrodes (foam, no signal, for tension), one ear-clip ground that plugs into both RLD and COMM, conductive paste, paper quick start.
 
 ## Wiring
 
+We have 6 electrodes. One forehead sensor is enough for blinks (a blink is hundreds of microvolts).
+
 | Channel pin | Lattice node | Used for |
 |---|---|---|
-| 1 | Oz | SSVEP tiles, alpha |
-| 2 | O1 | SSVEP, alpha |
-| 3 | O2 | SSVEP, alpha |
-| 4 | POz | SSVEP |
-| 5 | Fp1 | blinks |
-| 6 | Fp2 | blinks |
-| 7 | T7 (or T8) | jaw clench |
-| 8 | off | spare |
+| 1 | Oz | look tiles (SSVEP), eyes closed (alpha) |
+| 2 | O1 | look tiles, eyes closed |
+| 3 | O2 | look tiles, eyes closed |
+| 4 | POz | look tiles |
+| 5 | Fp1 | double blink |
+| 6 | T7 (or T8) | jaw clench |
+| 7, 8 | off | switches toward the header |
 
 - Each electrode wire goes to its channel's positive rail pin. Wrong rail or wrong pin is the number one mistake in the organizer guide.
-- Slide each used channel's switch away from the header. Leave channel 8's switch toward the header.
+- Slide channels 1 to 6 away from the header. Leave 7 and 8 toward the header so they add no noise.
 - Ear clip on the earlobe, leads into RLD and COMM.
 - Comfort pads around the electrodes so the frame sits level and the spikes get constant pressure.
 
@@ -34,7 +35,7 @@ Lattice headset with chin strap, Knight board on an Arduino, USB-C cable, dry sp
 1. Open the Visualizer, pick the port (top right). IMU box: choose Knight Board IMU.
 2. Activate channels one at a time: Active, then Route RLD, wait for the trace.
 3. Eyes closed 3 s: a clean ~10 Hz wave on channels 1-4.
-4. Blink: spikes on 5 and 6. Clench: channel 7 goes wild.
+4. Blink: spike on 5. Clench: channel 6 goes wild.
 5. Close the Visualizer. The serial port is exclusive; BrainFlow cannot open it while the Visualizer holds it.
 
 ## Board facts
