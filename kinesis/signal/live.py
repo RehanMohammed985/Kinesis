@@ -2,7 +2,9 @@
 kinesis/data/raw/baseline_trial1-3: eyes open 5 s, closed 15 s, open 15 s,
 jaw clenches, rest). See scripts/evaluate_baseline.py for the numbers.
 
-Montage (docs/HARDWARE.md): 1 Oz, 2 O1, 3 O2, 4 POz, 5 Fp1, 6 T7. 125 Hz.
+Montage: kinesis/montage.py (our electrodes are on pins 2-7). 125 Hz.
+Clench pins were picked from the baseline data by pin number, before we
+knew which site each pin was.
 
 What the recordings taught us:
 - Jaw clench shows up strongest on O2, POz and Fp1, not only T7 (the clench
@@ -23,10 +25,12 @@ import time
 import numpy as np
 from scipy.signal import butter, sosfiltfilt
 
+from kinesis.montage import MONTAGE, OCCIPITAL, PIN
+
 FS = 125
-CH_CLENCH = [3, 4, 5, 6]  # O2, POz, Fp1, T7
-CH_ALPHA = [1, 2, 3, 4]   # Oz, O1, O2, POz
-CH_BLINK = 5              # Fp1
+CH_CLENCH = [PIN["O1"], PIN["O2"], PIN["POz"], PIN["Fp1"]]  # pins 3-6, strongest clench in the baseline
+CH_ALPHA = OCCIPITAL
+CH_BLINK = PIN["Fp1"]
 
 SOS = {
     "muscle": butter(4, [20, 55], btype="band", fs=FS, output="sos"),
@@ -160,7 +164,7 @@ class Detectors:
         }, events
 
 
-SITES = {1: "Oz", 2: "O1", 3: "O2", 4: "POz", 5: "Fp1", 6: "T7"}
+SITES = MONTAGE
 PROMPTS = {
     "flat": "Not touching skin. Wiggle it into the hair and screw it down a little.",
     "noise": "Picking up noise. Check the ear clip and unplug the laptop charger.",
@@ -180,7 +184,7 @@ def quality(eeg):
         if std < 0.5:
             reason = "flat"
         elif stds[ch] > 10 * typical:
-            reason = "floating"  # e.g. Oz and O1 in our baseline recordings
+            reason = "floating"
         else:
             sig = np.mean(_f("eeg", x) ** 2)
             hum = np.mean(_f("line", x) ** 2)

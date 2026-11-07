@@ -1,0 +1,67 @@
+{
+  "about": "Sections of each rebuilt recording, marked by eye (seconds). rest_ref is the 5 s still reference; the first `settle` s and last `tail` s are left out. Which section is clench and which is double blink was decided from the signal, see README.md.",
+  "rest_ref": [
+    22.0,
+    27.0
+  ],
+  "settle": 8.0,
+  "tail": 2.0,
+  "channels": [
+    3,
+    4,
+    6,
+    7
+  ],
+  "trials": {
+    "double_trial1": {
+      "clench": [
+        30.5,
+        47.5
+      ],
+      "blink2": [
+        49.0,
+        61.0
+      ]
+    },
+    "double_trial2": {
+      "clench": [
+        33.5,
+        44.0
+      ],
+      "blink2": [
+        44.0,
+        56.0
+      ]
+    },
+    "double_trial3": {
+      "clench": [
+        33.0,
+        45.0
+      ],
+      "blink2": [
+        45.5,
+        56.0
+      ]
+    },
+    "double_trial4": {
+      "clench": [
+        35.0,
+        46.0
+      ],
+      "blink2": [
+        46.5,
+        57.0
+      ]
+    },
+    "double_trial5": {
+      "clench": [
+        33.0,
+        44.0
+      ],
+      "blink2": [
+        44.5,
+        57.0
+      ]
+    }
+  }
+}

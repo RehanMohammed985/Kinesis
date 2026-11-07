@@ -23,6 +23,7 @@ from scipy.signal import resample
 
 from kinesis.agent.hub import Hub
 from kinesis.board.knight import Knight
+from kinesis.montage import OCCIPITAL
 from kinesis.signal import learned as gl
 from kinesis.signal.live import FS, Detectors, quality
 
@@ -97,7 +98,7 @@ async def main():
             ok = (idx >= 0) & (idx < len(demo))
             if ok.any():
                 eeg = eeg.copy()
-                for ch in (1, 2, 3, 4):  # occipital only, so the switch detectors never fire
+                for ch in OCCIPITAL:  # back of the head only, so the switch detectors never fire
                     eeg[ch - 1, ok] += demo[idx[ok]] * inj["scale"]
             elif ts[-1] - inj["start"] > len(demo) / FS:
                 state["inject"] = None
@@ -131,7 +132,7 @@ async def main():
                     state["fit"] = True
                 elif kind == "demo_seizure":
                     base = hub.monitor.base or {}
-                    rms = float(np.median([base[c]["rms"] for c in (1, 2, 3, 4) if c in base] or [10.0]))
+                    rms = float(np.median([base[c]["rms"] for c in OCCIPITAL if c in base] or [10.0]))
                     state["inject"] = {"start": time.time() + 1, "scale": 5 * rms}
                     print("demo: replaying a recorded seizure into the live signal for 23 s")
                 elif kind in ("action", "confirm", "cancel", "heard", "report_request"):
@@ -147,7 +148,7 @@ async def main():
         model, info = c.train()
         if model is None:
             print("Gestures: not enough clean attempts to learn from", info)
-            await broadcast({"type": "calibration", "step": "model", "ok": False, "frames": info})
+            await broadcast({"type": "calibration", "step": "model", "ok": False, **info})
             return
         model.save(PERSONAL_MODEL)
         gest["det"] = gl.LearnedDetectors(model, det)
