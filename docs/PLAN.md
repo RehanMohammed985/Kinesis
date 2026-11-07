@@ -50,16 +50,29 @@ Recording, replay, and public datasets. Two people on this.
 - Done when: `python -m kinesis.data.replay data/sessions/<file>` runs all detectors and prints metrics
 
 ### 6. ML / agent (branch `ml-agent`)
-Phrase prediction and the conversation loop.
+Phrase prediction, the conversation loop, and the task agent. The agent is what turns one slow selection into many actions.
+- `actions.py`: the action registry. The agent may only call these, each with a confirm rule:
+
+  | Action | Params | Confirm before running |
+  |---|---|---|
+  | speak | text | no |
+  | call | contact | yes |
+  | message | contact, text | yes |
+  | help | (none) | no, sends immediately to the caregiver list |
+  | media | play / pause / next / prev / page_next / page_prev | no |
+  | report | recipient | yes |
+  | task | name, params (refill, ride, groceries, appointment, tell_family) | yes, shows the plan first |
+
+- `tasks.py`: each task is a short plan the agent fills in from context (contacts, pharmacy, address, last order) and that the app shows as steps before the user confirms. Steps run through the registry, so a task can never do something the registry does not allow.
 - `context.py`: Whisper (or Gemini audio) transcribes the last 20 s of the room mic
 - `predict.py`: Gemini generates 4 likely user replies given transcript, persona, and setting (home / work / clinic / out); prefetches the next 4
 - `monitor.py` ("detect stuff"): passive logging between selections: eyes-closed rest periods, unusual EMG activity, Fit degradation over the day, time since last calibration. Logged locally, summarized into the physician report. No diagnoses, no mental-state labels.
-- `profile.py`: persona from the user's own past messages, name, school/work context
+- `profile.py`: persona from the user's own past messages, name, contacts, pharmacy, doctor
 - Stretch: TRCA transfer learning across subjects from OpenBMI to cut SSVEP calibration
-- Done when: speak a question into the mic and four sensible replies appear in under 2 s
+- Done when: speak a question into the mic and four sensible replies appear in under 2 s; selecting "Refill my prescription" shows a 4-step plan, a double blink confirms, the steps tick off
 
 ### 7. React (branch `react`)
-The interface the user and the teacher see.
+The interface the user and the caregiver see. This is the highlight of the demo; everything else feeds it. Protocol in docs/PROTOCOL.md.
 - Message board: 2x2 or 1x4 scanning grid, highlight moves every 2 s, SELECT fires the highlighted item
 - Tiles mode: same grid, each tile flickers at its frequency using requestAnimationFrame on a 60 Hz display (never setInterval)
 - Fit view: lattice map, red/amber/green per electrode, the prompt text
@@ -89,28 +102,39 @@ The interface the user and the teacher see.
 Never cut: EMG + blink detectors, Fit map, the React board, the 90 s video.
 
 ## Positioning
-Not a classroom tool. A personal device and app for running your life: talk, call, control, share, report. 5-minute setup, re-run as the condition changes. Privacy rule: only what the user selects leaves the device.
+AI is automating everyone's life except the people who need it most. Every assistant and agent assumes you can type or talk. Kinesis gives people who can't the input.
+
+A personal device and app for running your life: talk, call, control, share, report, and hand off whole tasks to an agent. 5-minute setup, re-run as the condition changes.
+
+Core idea: one selection, many actions. A BCI gives one choice every couple of seconds; the agent turns that choice into a finished task. "Refill my prescription" is one clench, then a plan the user confirms with a double blink, then the agent does the steps.
+
+Rules we say out loud:
+- We read choices, not thoughts. The user picks from options; the agent carries them out.
+- Anything that contacts someone or spends money is shown as a plan and needs a confirm.
+- Only what the user selects leaves the device. Never raw EEG, never inferred mental state.
 
 ## Demo script (90 s)
 0. Setup: teammate puts on the headset, Fit map goes green, 2-minute calibration (sped up in the video, live if time allows)
 1. Talk: judge asks a question, mic hears it, four Gemini replies appear, clench picks one, spoken in own voice
 2. Call: clench on "Call Mom", the phone rings on the table, double blink answers
 3. Control: blink = next page on the Kindle / iPad, alpha = play-pause music
-4. Ask for help: "I need help" goes to the caregiver's phone
-5. Report: "Send to my doctor" produces the day's log and sends it
+4. Hand off a task: clench on "Refill my prescription", the plan appears (find the prescription, call the pharmacy, confirm pickup, text me), double blink confirms, the steps tick off
+5. Ask for help: "I need help" goes to the caregiver's phone
+6. Report: "Send to my doctor" produces the day's log and sends it
 Second teammate puts it on, 5-minute setup, repeats step 1. A different input gets picked for them.
 
 ## Deck outline (.pptx)
-1. Problem: losing movement or speech means losing control of your phone, your calls, your reading, your voice, and your own medical record
-2. Who: anyone with a motor or speech impairment: ALS, cerebral palsy, spinal cord injury, stroke, MS, muscular dystrophy
-3. Kinesis: three inputs, one output, $350
-4. Live demo
-5. How it works (board, detectors, calibration, privacy rule)
-6. Results: accuracy / ITR / false positives per input per person, Fit before/after
-7. Inclusivity: Probe picks the input; Fit for every hair type; blind users via audio scanning
-8. Scalability: keypress into any OS; $350 vs $7,450 (eye-gaze SGD) vs $16,000 (NeuroNode); calibration is 2 min
-9. Prior art and what's new
-10. Roadmap: gaze mode, clinical pilot, device-agnostic switch output
+1. AI is automating everyone's life. Every assistant assumes hands or a voice.
+2. Problem: losing movement or speech means losing control of your phone, your calls, your reading, your voice, and your own medical record
+3. Who: anyone with a motor or speech impairment: ALS, cerebral palsy, spinal cord injury, stroke, MS, muscular dystrophy
+4. Kinesis: three inputs, one selection, many actions, $350
+5. Live demo
+6. How it works (board, detectors, calibration, agent registry, privacy rule)
+7. Results: accuracy / ITR / false positives per input per person, Fit before/after
+8. Inclusivity: calibration picks the input; Fit for every hair type; blind users via spoken scanning
+9. Scalability: keypress into any OS, agent tasks reuse the same registry; $350 vs $7,450 (eye-gaze SGD) vs $16,000 (NeuroNode); 5-minute setup
+10. Prior art and what's new
+11. Roadmap: more agent tasks, clinical pilot, device-agnostic switch output
 
 ## Prior art to cite (be honest on slide 9)
 - Cognixion Axon-R: SSVEP + LLM phrase prediction, needs Vision Pro
@@ -119,4 +143,4 @@ Second teammate puts it on, 5-minute setup, repeats step 1. A different input ge
 - WATOLINK 2022, QMind 2023: SSVEP + GPT replies on OpenBCI
 - Neuralink / Apple Personal Voice: own-voice output
 - Lee et al. 2019 GigaScience: no user is illiterate on all BCI paradigms
-What's new: all three inputs in one cheap device, automatic input selection, fit for textured hair, privacy-by-design message sharing.
+What's new: an input layer for AI agents built for people who cannot type or talk; all three inputs in one cheap device, automatic input selection, fit for textured hair, privacy-by-design message sharing.
