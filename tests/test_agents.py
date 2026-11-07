@@ -13,6 +13,7 @@ from kinesis.agent import report  # noqa: E402
 from kinesis.agent.comms import CommunicationAgent  # noqa: E402
 from kinesis.agent.registry import Registry  # noqa: E402
 from kinesis.agent.tasks import TaskAgent  # noqa: E402
+from kinesis.montage import PIN  # noqa: E402
 
 FS = 125
 rng = np.random.default_rng(1)
@@ -66,8 +67,8 @@ def main():
     # 2. 20 s seizure-like activity on every channel but Fp1
     eeg = background(30)
     sw = spike_wave(20)
-    for r in (0, 1, 2, 3, 5):
-        eeg[r, 5 * FS:25 * FS] += sw
+    for s in ("Oz", "O1", "O2", "POz", "T7"):
+        eeg[PIN[s] - 1, 5 * FS:25 * FS] += sw
     run_monitor(m, eeg, clock)
     alerts = [x for x in sent if x["type"] == "alert"]
     assert len(alerts) == 1 and alerts[0]["kind"] == "seizure_like", alerts
@@ -78,10 +79,11 @@ def main():
     # 3. jaw clench (muscle) and blinks: must not alert
     sent.clear()
     eeg = background(20)
-    eeg[5, 4 * FS:12 * FS] += rng.normal(0, 120, 8 * FS)        # T7 muscle burst
-    eeg[0:4, 4 * FS:12 * FS] += rng.normal(0, 40, (4, 8 * FS))   # spill onto others
+    eeg[PIN["T7"] - 1, 4 * FS:12 * FS] += rng.normal(0, 120, 8 * FS)   # T7 muscle burst
+    for s in ("Oz", "O1", "O2", "POz"):                                  # spill onto others
+        eeg[PIN[s] - 1, 4 * FS:12 * FS] += rng.normal(0, 40, 8 * FS)
     for b in (3, 3.4, 9, 9.4):
-        eeg[4, int(b * FS):int(b * FS) + 25] += 250                  # blinks on Fp1
+        eeg[PIN["Fp1"] - 1, int(b * FS):int(b * FS) + 25] += 250            # blinks on Fp1
     run_monitor(m, eeg, clock, events_at=(4, 6, 8, 10))
     assert not [x for x in sent if x["type"] == "alert"], "clench or blink set off an alert"
     print("clench and blinks: no alert")
@@ -90,7 +92,7 @@ def main():
     sent.clear()
     for minute in range(6):
         eeg = background(62)
-        eeg[1] += 40 * np.sin(2 * np.pi * 2 * np.arange(eeg.shape[1]) / FS)
+        eeg[PIN["O1"] - 1] += 40 * np.sin(2 * np.pi * 2 * np.arange(eeg.shape[1]) / FS)
         run_monitor(m, eeg, clock)
     assert any(x.get("type") == "notice" and "rhythm changed" in x["text"] for x in sent), "slowing not flagged"
     print("left-sided slowing 6 min: flagged once at 5 min")

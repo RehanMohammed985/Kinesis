@@ -12,11 +12,12 @@ from pathlib import Path
 import numpy as np
 
 from kinesis.agent import brain
+from kinesis.montage import PIN
 
 ROOT = Path(__file__).resolve().parents[2]
-SEIZURE_CHANNELS = [1, 2, 3, 4, 6]  # Oz O1 O2 POz T7 (Fp1 left out: blinks)
-OCC = [1, 2, 3]
-O1, O2 = 2, 3
+SEIZURE_CHANNELS = [PIN[s] for s in ("Oz", "O1", "O2", "POz", "T7")]  # Fp1 left out: blinks
+OCC = [PIN[s] for s in ("Oz", "O1", "O2")]
+O1, O2 = PIN["O1"], PIN["O2"]
 
 
 class DayLog:

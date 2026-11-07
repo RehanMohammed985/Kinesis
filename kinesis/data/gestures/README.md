@@ -1,41 +1,40 @@
-# Double-blink and clench recordings, rebuilt
+# Clench and double-blink recordings, rebuilt
 
-Three trials recorded on our headset (Nov 7). Protocol, give or take: still about 10 s, eyes closed about 10 s, still, double blinks (10 to 17 s), jaw clenches (about 11 s), still. Columns are channels 1 to 8 at 125 Hz, about 65 s each.
+Five trials recorded on our headset (Nov 7). Trials 4 and 5 were recorded with the ear clip tightened. Protocol, give or take: still about 10 s, eyes closed about 10 s, still, a section of jaw clenches, a section of double blinks, still. Columns are channels 1 to 8 at 125 Hz, about 65 s each.
 
-The originals are on the data-collection branch (kinesis/data/raw/double_trial*/). They were saved as overlapping 500-row snapshots, so these files are rebuilt with scripts/reconstruct_windows.py and each sample appears once.
+The originals are on the data-collection branch (kinesis/data/raw/double_trial*/). They were saved as overlapping 500-row snapshots, so these files are rebuilt with scripts/reconstruct_windows.py and each sample appears once. `sections.json` marks each section.
 
 ## What the recordings show
 
-- **Channels:** channel 1 recorded nothing (it was switched off). Channel 2 was floating. Channels 3 to 7 had signal, so channel 7 has an electrode on it. Check which pin each electrode is plugged into.
-- **Ear clip:** channels 3 to 7 move almost identically (correlation 0.99 in trials 1 and 3). That means the ear clip, not the scalp, dominates. Re-seat it.
-- **Eyes closed:** no alpha increase in any trial, so eyes-closed detection will not work with this fit.
-- **Double blink:** a burst every channel shares, plus activity on channel 7 only.
-- **Clench:** activity that differs channel to channel, on all of them.
+- **Wiring:** the electrodes are on pins 2 to 7, not 1 to 6. Pin 1 read nothing and pin 8 was off; in the baseline recordings both floated. The core now reads pins 2 to 7 (kinesis/montage.py).
+- **Ear clip:** tightening it lowered the noise on every channel (1 to 40 Hz spread: 1,300 to 2,100 in trials 4 and 5 vs 2,700 to 23,000 in trials 1 to 3). Pin 5 (POz) floated in trials 4 and 5, so re-seat it.
+- **Eyes closed:** trial 4 showed a small alpha rise (about 1.6x), trial 5 none. Not usable yet.
+- **Which section is which:** the notes said double blinks came first, but the signal says the first section is clenches:
+  - It looks like the clench-only baseline: one burst every channel shares, because the ear clip sits next to the jaw muscle.
+  - It also shows up at the temple (pin 7) or the back of the head (pin 2, neck muscle). Blinks never reach the back of the head.
+  - The second section is the forehead channel alone (pin 6), with two spikes about 0.2 s apart, roughly once a second. That is a double blink.
+  - Labels follow the signal. In the app this never matters, because calibration labels each step by what the person was asked to do.
 
-## Fixed rules vs learned model
+## Results
 
-The fixed rules (kinesis/signal/live.py):
-- caught 0 double blinks
-- fired "clench" 43 times during the double blinks
+The fixed rules (kinesis/signal/live.py) caught 0 double blinks and called them clenches.
 
-The learned model (kinesis/signal/learned.py) uses shrinkage LDA on 22 log-power features and is trained per person during the app's calibration. Results, leave one trial out (trained on two trials, streamed through the live detector on the third):
+The learned model (kinesis/signal/learned.py) uses shrinkage LDA on log-power features. It was tested leave one trial out: trained on 4 trials, then streamed through the live detector on the 5th.
 
-| | trial 1 | trial 2 | trial 3 | total |
-|---|---|---|---|---|
-| double blink events | 8 (17 s of blinking) | 6 (10 s) | 6 (12 s) | 20 |
-| double blinks read as clench | 0 | 1 | 0 | 1 |
-| clench events (bursts seen offline) | 15 (14) | 9 (17) | 15 (15) | 39 (46) |
-| clenches read as double blink | 0 | 0 | 0 | 0 |
-| false events while still | 2 in 23 s | 0 in 30 s | 1 in 30 s | 3 in 82 s |
-| frames right: rest / clench / double blink | 100 / 99 / 96% | 100 / 99 / 89% | 100 / 100 / 99% | |
+| | 1 | 2 | 3 | 4 | 5 | total |
+|---|---|---|---|---|---|---|
+| double blinks caught (bursts seen offline) | 14 (14) | 9 (17) | 14 (15) | 13 (13) | 14 (12) | 64 (71) |
+| clenches caught (bursts seen offline) | 9 (10) | 6 (8) | 6 (9) | 5 (8) | 5 (6) | 31 (41) |
+| mix-ups | 0 | 0 | 0 | 1 | 0 | 1 |
+| false events while still | 2 in 23 s | 0 in 30 s | 0 in 30 s | 0 in 32 s | 0 in 31 s | 2 in 145 s |
 
-Calibrating on trial 3 alone, the way the app does it, then streaming trials 1 and 2:
-- 9 and 6 double blinks
-- 15 and 9 clenches
-- 1 mix-up
+The clench count runs low on purpose: a clench re-arms only after the person relaxes, so a held clench never selects twice.
 
-The double blinks were done back to back with almost no pause, so there is no exact count to score against. Next recording: pause about 2 s between double blinks (scripts/record.py cues one every 3 s).
+**In-app calibration** (still, 5 clenches, 5 double blinks) pools the person's attempts, weighted 3x, with these recordings. Calibrating on one trial and testing on another:
+- pooled never did worse than calibration alone
+- calibrate on trial 5, test on trial 4: alone, 1 clench caught and 4 mix-ups; pooled, 2 and 2
+- calibrate on trial 1, test on trial 2: alone, 1 clench caught; pooled, 6
 
-`model.json` is the model trained on all three trials. The core uses it until someone calibrates in the app, which saves their own model to data/gesture_model.json.
+`model.json` is trained on all five trials. The core uses it until someone calibrates, which saves their own model to data/gesture_model.json.
 
 Run: `python scripts/train_gestures.py kinesis/data/gestures/double_trial*.csv --save kinesis/data/gestures/model.json`

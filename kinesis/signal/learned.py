@@ -1,12 +1,12 @@
 """Learned gestures: the app learns what each person's clench and double blink
 look like during calibration, instead of using one fixed rule for everyone.
 
-Why: on our double-blink recordings (kinesis/data/gestures/) the fixed rules
-missed every double blink and fired "clench" on them, because with this
-headset fit both gestures show up as muscle noise. But the two look different:
-- double blink: a burst shared by every channel (it comes in through the ear
-  clip) plus activity on one channel only
-- clench: activity that differs channel to channel, on all of them
+Why: on our recordings (kinesis/data/gestures/) the fixed rules missed every
+double blink and called them clenches, because with dry electrodes both
+gestures show up as muscle noise. But the two look different:
+- clench: a burst every channel shares (the ear clip sits next to the jaw
+  muscle) plus the temple or the back of the head (neck muscle)
+- double blink: one channel, the forehead, with two spikes about 0.2 s apart
 A small linear model (shrinkage LDA, a few lines of numpy) separates them.
 People differ (weak jaw, eyes only, a different fit), so each person trains
 their own in the calibration steps the app already has: stay still, clench,
@@ -18,6 +18,7 @@ raw channel and on the channel minus the median of all channels; plus the
 two powers of the median itself (what every channel shares). All log ratios.
 """
 import json
+import threading
 from pathlib import Path
 
 import numpy as np
@@ -31,6 +32,8 @@ SOS = {
     "eeg": butter(2, [1, 40], btype="band", fs=FS, output="sos"),
 }
 CLASSES = ["rest", "clench", "blink2"]
+TEAM = Path(__file__).resolve().parents[1] / "data" / "gestures"   # our recordings
+TEAM_WEIGHT = 3   # a person's own calibration frames count 3x our recordings
 
 # Gesture-agnostic activity, used to label calibration frames and count
 # attempts before any model exists: median muscle power across channels, x rest.
@@ -40,10 +43,12 @@ ACT_OFF = 2.0
 # Turning frame probabilities into events.
 P_FIRE = 0.8      # gesture probability needed
 HOLD_S = 0.2      # held this long (a stray twitch is shorter)
-GAP_S = {"clench": 0.5, "blink2": 0.8}
-REARM_REL = 0.45  # clench re-arms once activity falls below 45% of its peak
-P_REARM = 0.5     # double blink re-arms once the model says rest (the dip
-                  # between the two blinks of one double blink is not rest)
+GAP_S = {"clench": 0.8, "blink2": 0.7}  # the 2nd blink of a pair is 0.2 s after the 1st
+P_REARM = 0.5     # any gesture re-arms once the model says rest
+REARM_REL = {"clench": None, "blink2": 0.45}
+# Clench waits for rest (a held clench wobbles; firing twice would select
+# twice). Double blinks come back to back with no real rest between them, so
+# they re-arm once activity falls below 45% of the peak just reached.
 
 
 def _f(name, x):
@@ -152,10 +157,7 @@ class GestureModel:
 
 
 class GestureEvents:
-    """Frame probabilities -> clench / blink2 events, one per gesture.
-    Re-arming is relative to the peak, like the rule-based clench: people
-    often clench again before fully relaxing, and do double blinks back to
-    back, so waiting for full rest would miss most of them."""
+    """Frame probabilities -> clench / blink2 events, one per gesture."""
 
     def __init__(self):
         self.armed = True
@@ -169,8 +171,8 @@ class GestureEvents:
         events = []
         if not self.armed:
             self.peak = max(self.peak, act)
-            rest = p.get("rest", 0) >= P_REARM
-            if rest or (self.fired == "clench" and act < max(ACT_OFF, REARM_REL * self.peak)):
+            rel = REARM_REL.get(self.fired)
+            if p.get("rest", 0) >= P_REARM or (rel is not None and act < max(ACT_OFF, rel * self.peak)):
                 self.armed = True
                 self.cand = None
             return events
@@ -186,17 +188,75 @@ class GestureEvents:
         return events
 
 
+def labelled(eeg, sec, chans, meta, hop=6):
+    """Training frames from one recording with marked sections: active frames
+    inside a section get its label, quiet frames in the still parts are rest."""
+    n = int(1.2 * FS)
+    ts = np.arange(n, eeg.shape[1] + 1, hop) / FS
+    F = np.array([raw_features(eeg[:, int(t * FS) - n:int(t * FS)], chans) for t in ts])
+    r0, r1 = meta["rest_ref"]
+    R = F - np.median(F[(ts >= r0) & (ts <= r1)], axis=0)
+    end = eeg.shape[1] / FS
+    first = min(a for a, _ in sec.values())
+    last = max(b for _, b in sec.values())
+    X, y = [], []
+    for t, r in zip(ts, R):
+        kind = next((k for k, (a, b) in sec.items() if a <= t <= b), None)
+        if kind is None and (meta["settle"] <= t <= first - 1 or last + 1 <= t <= end - meta["tail"]):
+            kind = "rest"
+        if kind is None:
+            continue
+        a = activity(r, len(chans))
+        if kind != "rest" and a >= ACT_ON:
+            X.append(r)
+            y.append(CLASSES.index(kind))
+        elif a < ACT_OFF:
+            X.append(r)
+            y.append(0)
+    return X, y
+
+
+def team_meta():
+    return json.loads((TEAM / "sections.json").read_text())
+
+
+def team_set(chans, hop=12):
+    """Our labelled recordings as training frames for these channels."""
+    meta = team_meta()
+    X, y = [], []
+    for name, sec in meta["trials"].items():
+        eeg = np.loadtxt(TEAM / f"{name}.csv", delimiter=",").T
+        a, b = labelled(eeg, sec, chans, meta, hop)
+        X += a
+        y += b
+    return X, y
+
+
 class Calibrator:
     """Collects labelled frames during the app's calibration steps and trains.
     Rest frames come from the rest step and the quiet moments between
     attempts; gesture frames are the active moments during that gesture's step."""
 
-    def __init__(self, chans):
-        self.model = GestureModel(chans)
+    def __init__(self, session_chans, use_team=True):
+        # Pool with our recordings when this session has at least 3 of the
+        # channels they share; a 1-minute calibration alone can be brittle.
+        shared = [c for c in team_meta()["channels"] if c in session_chans] if use_team else []
+        self.pooled = len(shared) >= 3
+        self.model = GestureModel(shared if self.pooled else session_chans)
         self.rest_feats = []
         self.frames = []          # (raw feature, step)
         self.armed = True
         self.peak = 0.0
+        self.team = None
+        if self.pooled:  # ~10 s of work; done by the time the gesture steps end
+            threading.Thread(target=self._load_team, daemon=True).start()
+
+    def _load_team(self):
+        try:
+            self.team = team_set(self.model.chans)
+        except Exception as e:  # never block calibration on this
+            print("Gestures: could not load our recordings to pool with:", e)
+            self.team = ([], [])
 
     def add_rest(self, feat_raw):
         self.rest_feats.append(feat_raw)
@@ -211,7 +271,7 @@ class Calibrator:
             self.armed, self.peak = False, a
             return True
         self.peak = max(self.peak, a)
-        if a < max(ACT_OFF, REARM_REL * self.peak):
+        if a < max(ACT_OFF, 0.45 * self.peak):
             self.armed = True
         return False
 
@@ -234,13 +294,18 @@ class Calibrator:
         y = np.array(y)
         counts = {c: int((y == i).sum()) for i, c in enumerate(CLASSES)}
         if counts["clench"] < 5 or counts["blink2"] < 5:
-            return None, counts
-        self.model.fit(X, y)
-        # how cleanly each class is told apart, on the training frames
+            return None, {"frames": counts}
+        Xa, ya = np.repeat(np.array(X), TEAM_WEIGHT, axis=0), np.repeat(y, TEAM_WEIGHT)
+        team = self.team or ([], [])
+        if len(team[0]):
+            Xa, ya = np.vstack([Xa, np.array(team[0])]), np.concatenate([ya, np.array(team[1])])
+        self.model.fit(Xa, ya)
+        # how cleanly each class is told apart, on this person's frames
         P = self.model.lda.proba(np.array(X))
         pred = np.array(self.model.lda.classes)[P.argmax(1)]
-        scores = {c: float(np.mean(pred[y == i] == i)) for i, c in enumerate(CLASSES) if (y == i).any()}
-        return self.model, {"frames": counts, "accuracy": scores}
+        scores = {c: round(float(np.mean(pred[y == i] == i)), 3) for i, c in enumerate(CLASSES) if (y == i).any()}
+        return self.model, {"frames": counts, "accuracy": scores, "channels": self.model.chans,
+                            "pooled_with_team_frames": len(team[0])}
 
 
 class LearnedDetectors:

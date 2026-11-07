@@ -7,18 +7,20 @@ Lattice headset with chin strap, standard Knight board (not IMU, BrainFlow id 57
 
 We have 6 electrodes. One forehead sensor is enough for blinks (a blink is hundreds of microvolts).
 
+Our headset has the electrodes on **pins 2 to 7** (the recordings show pins 1 and 8 empty). The core reads the pin map from kinesis/montage.py; if the wires move to pins 1 to 6, set KINESIS_FIRST_PIN=1.
+
 | Channel pin | Lattice node | Used for |
 |---|---|---|
-| 1 | Oz | look tiles (SSVEP), eyes closed (alpha) |
-| 2 | O1 | look tiles, eyes closed |
-| 3 | O2 | look tiles, eyes closed |
-| 4 | POz | look tiles |
-| 5 | Fp1 | double blink |
-| 6 | T7 (or T8) | jaw clench |
-| 7, 8 | off | switches toward the header |
+| 2 | Oz | look tiles (SSVEP), eyes closed (alpha) |
+| 3 | O1 | look tiles, eyes closed |
+| 4 | O2 | look tiles, eyes closed |
+| 5 | POz | look tiles |
+| 6 | Fp1 | double blink |
+| 7 | T7 (or T8) | jaw clench |
+| 1, 8 | off | switches toward the header |
 
 - Each electrode wire goes to its channel's positive rail pin. Wrong rail or wrong pin is the number one mistake in the organizer guide.
-- Slide channels 1 to 6 away from the header. Leave 7 and 8 toward the header so they add no noise.
+- Slide the switches for the pins in use (2 to 7) away from the header. Leave 1 and 8 toward the header so they add no noise.
 - Ear clip on the earlobe, leads into RLD and COMM.
 - Comfort pads around the electrodes so the frame sits level and the spikes get constant pressure.
 
