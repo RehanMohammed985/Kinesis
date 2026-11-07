@@ -4,8 +4,7 @@ in the last row). Close the EXG Visualizer first.
 
 python scripts/record.py --port /dev/cu.usbmodemXXXX --name rehan
 
-Markers: 1 rest eyes open, 2 eyes closed, 3 clench cue, 4 double blink cue,
-5 look at tile (SSVEP done separately with NeuroPawn's repo).
+Protocol (2:30) is in PLAN below; the script prints each cue with a timestamp.
 """
 import argparse
 import sys
@@ -15,13 +14,20 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from kinesis.board.knight import Knight  # noqa: E402
 
+# (cue, marker, seconds). Markers: 1 eyes open still, 2 eyes closed,
+# 3 clench, 4 double blink. Total 2:30.
 PLAN = [
-    ("Sit still, eyes open, look at the screen", 1, 30, 1),
-    ("Close your eyes and relax", 2, 20, 1),
-    ("Eyes open, relax", 1, 10, 1),
-    ("CLENCH your jaw now, then let go", 3, 3, 10),
-    ("DOUBLE BLINK now", 4, 3, 10),
-    ("Close your eyes until the beep", 2, 6, 4),
+    ("Sit still, eyes OPEN, look at the screen", 1, 10),
+    ("Eyes CLOSED, relax", 2, 10),
+    ("Eyes OPEN", 1, 10),
+    ("Eyes CLOSED, relax", 2, 10),
+    ("Eyes OPEN", 1, 10),
+    ("Eyes CLOSED, relax", 2, 10),
+    ("Eyes OPEN, sit still", 1, 10),
+] + [("DOUBLE BLINK now", 4, 3)] * 10 + [
+    ("Sit still, eyes open", 1, 10),
+] + [("CLENCH your jaw (1 s), then let go", 3, 3)] * 10 + [
+    ("Sit still, eyes open", 1, 10),
 ]
 
 
@@ -39,15 +45,12 @@ def main():
     k.start_recording(str(out))
     print(f"Recording to {out}\n")
     try:
-        for text, marker, seconds, reps in PLAN:
-            for r in range(reps):
-                label = f"{text}" + (f"  ({r + 1}/{reps})" if reps > 1 else "")
-                print(f"\n>>> {label}")
-                k.mark(marker)
-                time.sleep(seconds)
-                if marker == 2 and reps > 1:
-                    print("\a beep, open your eyes")
-                    time.sleep(3)
+        t0 = time.time()
+        for i, (text, marker, seconds) in enumerate(PLAN):
+            mm, ss = divmod(int(time.time() - t0), 60)
+            print(f"[{mm}:{ss:02d}] {text}")
+            k.mark(marker)
+            time.sleep(seconds)
     finally:
         k.stop()
     print(f"\nDone. Saved {out}")
