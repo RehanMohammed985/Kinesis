@@ -25,6 +25,7 @@ from kinesis.agent.hub import Hub
 from kinesis.board.knight import Knight
 from kinesis.montage import OCCIPITAL
 from kinesis.signal import learned as gl
+from kinesis.signal.ssvep import Look
 from kinesis.signal.live import FS, Detectors, quality
 
 WIN = int(1.2 * FS)
@@ -74,6 +75,7 @@ async def main():
                 print(f"Gestures: learned model {path} (channels {gest['det'].model.chans})")
                 break
     cal = {"step": None, "c": None}
+    look = {"on": False, "dec": Look(), "last": 0.0, "level": None}
     loop = asyncio.get_running_loop()
 
     def emit(msg):
@@ -128,6 +130,10 @@ async def main():
                     else:  # the switch steps are over: learn this person's gestures
                         cal["step"] = None
                         await train_gestures()
+                elif kind == "look":  # the app's Look screen is open
+                    look["on"] = bool(msg.get("on"))
+                    look["dec"] = Look()
+                    look["level"] = None
                 elif kind == "fit":
                     state["fit"] = True
                 elif kind == "demo_seizure":
@@ -198,6 +204,15 @@ async def main():
                     events = [{"type": "event", "input": cal["step"]}]
             if args.synthetic:
                 events = []  # synthetic data is meaningless for switches
+            look_events = []
+            if look["on"] and now - look["last"] >= 0.25 and eeg.shape[1] >= int(2.0 * FS):
+                look["last"] = now
+                look["level"], look_events = look["dec"].update(eeg, now)
+                if args.synthetic:
+                    look_events = []
+            if look["on"] and look["level"]:
+                levels["look"] = look["level"]
+            events = events + look_events
             await broadcast({"type": "levels", **levels})
             for ev in events:
                 print("event:", ev["input"])
