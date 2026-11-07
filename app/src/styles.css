@@ -440,3 +440,11 @@ button { font: inherit; color: inherit; }
   .lens { transition: none; }
   .lens.flash, .ring, .listening i { animation: none; }
 }
+
+/* ---------- report: brain section ---------- */
+.brainbox { gap: 8px; }
+.brain-row { display: flex; justify-content: space-between; gap: 16px; }
+.brain-row b { font-weight: 600; }
+.brain-row span { color: var(--ink-soft); text-align: right; }
+.fact.warn { box-shadow: inset 0 0 0 3px var(--alarm); }
+.fact.warn b { color: var(--alarm); }

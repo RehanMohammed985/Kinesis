@@ -26,6 +26,18 @@ export default function App() {
   const [route, setRoute] = useState({ name: SCREENS[first] ? first : 'fit', params: {}, n: 0 })
   const go = useCallback((name, params = {}) => setRoute((r) => ({ name, params, n: r.n + 1 })), [])
 
+  // a seizure-like alert from the monitor opens the alarm screen
+  useEffect(
+    () =>
+      k.subscribe((msg) => {
+        if (msg.type === 'alert' && msg.kind === 'seizure_like') {
+          k.outbox({ kind: 'help', to: 'Sam, Nurse line', text: msg.text })
+          go('help', { reason: 'seizure', text: msg.text })
+        }
+      }),
+    [k, go],
+  )
+
   // simulator shortcuts that are not inputs
   useEffect(() => {
     const down = (e) => {
@@ -67,6 +79,7 @@ function Keys() {
       <kbd>I</kbd><span>Incoming call from Sam</span>
       <kbd>L</kbd><span>Look mode</span>
       <kbd>S</kbd><span>Spoken scanning on or off</span>
+      <kbd>X</kbd><span>Replay a recorded seizure</span>
       <kbd>Shift H</kbd><span>Home</span>
       <kbd>?</kbd><span>Hide these keys</span>
     </div>

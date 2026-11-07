@@ -1,0 +1,21 @@
+{
+  "name": "Maya",
+  "full_name": "Maya Okafor",
+  "about": "34, ALS diagnosed 2 years ago, former high school chemistry teacher, lives with her partner Sam in Raleigh",
+  "address": "Raleigh, NC",
+  "contacts": {
+    "mom": {"name": "Mom", "full_name": "Ada Okafor", "phone": "+15555550101", "relation": "mother"},
+    "sam": {"name": "Sam", "phone": "+15555550102", "relation": "partner"},
+    "dr_patel": {"name": "Dr. Patel", "phone": "+15555550103", "email": "dr.patel@example.org", "relation": "neurologist"},
+    "nurse": {"name": "Nurse line", "phone": "+15555550104", "relation": "24 hour nurse line"},
+    "ama": {"name": "Ama", "phone": "+15555550105", "relation": "sister"}
+  },
+  "care_list": ["sam", "nurse"],
+  "doctor": "dr_patel",
+  "pharmacy": {"name": "Walgreens, Hillsborough St", "phone": "+15555550199"},
+  "medications": [{"name": "Riluzole", "dose": "50 mg", "last_filled": "Oct 9"}],
+  "safety_alerts": {
+    "seizure_like": true,
+    "slowing_change": false
+  }
+}

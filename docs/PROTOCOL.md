@@ -61,6 +61,19 @@ A task plan for confirmation, then progress as it runs.
 {"type": "step", "id": "t1", "index": 1, "status": "done", "detail": "Walgreens on Hillsborough St, ready at 4:30"}
 ```
 
+### alert / notice
+From the monitor agent. `alert` opens the alarm screen; `notice` is a toast.
+```json
+{"type": "alert", "kind": "seizure_like", "text": "Kinesis detected seizure-like brain activity on Maya at 3:21 pm. Please check on them now."}
+{"type": "notice", "text": "Seizure-like activity ended after about 26 seconds. Logged for your doctor."}
+```
+
+### report
+From the report agent, in answer to `report_request` or `action: report`. `file` is the HTML report for the doctor.
+```json
+{"type": "report", "day": "2026-11-07", "facts": [["143", "choices made"]], "brain": {"seizure_like": [{"at": "3:21 pm", "duration_s": 26}], "rest_periods": 3, "alpha_peak_hz": 9.8}, "hours": [{"hour": "3 pm", "quality": 0.92, "dar": 1.4, "bsi": 0.08}], "notes": [["9:12 am", "My back hurt"]], "summary": "...", "file": "data/reports/report-2026-11-07.html"}
+```
+
 ## App to core
 
 ```json
@@ -72,13 +85,19 @@ A task plan for confirmation, then progress as it runs.
 {"type": "action", "action": "media", "command": "page_next"}
 {"type": "action", "action": "report", "recipient": "dr_patel"}
 {"type": "action", "action": "task", "task": "refill"}
+{"type": "action", "action": "note", "text": "My back hurt"}
 {"type": "confirm", "id": "t1"}
 {"type": "cancel", "id": "t1"}
+{"type": "heard", "speaker": "Sam", "text": "Do you want to watch something tonight?"}
+{"type": "report_request"}
+{"type": "demo_seizure"}
 ```
+`heard` asks the communication agent for replies. `demo_seizure` mixes a real recorded seizure (Bonn dataset) into the live signal for 23 s so the real detector can be shown; the app labels it as a replay.
 
 ## Simulator keys (app runs without the core)
 - Hold **C**: clench rises, fires at threshold
 - Press **B** twice quickly: double blink
 - Hold **E**: eyes closed, alpha rises
 - **1 2 3 4**: look at tile
+- **X**: replay a recorded seizure
 - **?**: show these keys on screen

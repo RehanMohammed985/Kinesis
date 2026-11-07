@@ -42,6 +42,7 @@ export function KinesisProvider({ children }) {
   const wsRef = useRef(null)
   const modeRef = useRef(mode)
   modeRef.current = mode
+  const demoRef = useRef(null)
 
   const emit = useCallback((msg) => {
     if (msg.type === 'event') firedRef.current[LEVEL_KEY[msg.input] || msg.input] = performance.now()
@@ -96,6 +97,7 @@ export function KinesisProvider({ children }) {
           setQuality((q) => q.map((c) => msg.channels.find((m) => m.ch === c.ch) || c))
         }
         if (msg.type === 'calibration' && msg.done && msg.profile) setProfile((p) => ({ ...p, ...msg.profile }))
+        if (msg.type === 'notice') say(msg.text, 6000)
         emit(msg)
       }
     }
@@ -105,7 +107,21 @@ export function KinesisProvider({ children }) {
       clearTimeout(retry)
       wsRef.current?.close()
     }
-  }, [emit])
+  }, [emit]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ---------- demo: replay a recorded seizure ----------
+  // With the core: it mixes a real recorded seizure (Bonn dataset) into the live
+  // signal and the real detector raises the alert. Without it: simulated.
+  const demoSeizure = useCallback(() => {
+    if (modeRef.current === 'core') {
+      send({ type: 'demo_seizure' })
+      return
+    }
+    setTimeout(() => {
+      const when = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase()
+      emit({ type: 'alert', kind: 'seizure_like', text: `Kinesis detected seizure-like brain activity on Maya at ${when}. Please check on them now.` })
+    }, 8000)
+  }, [send, emit])
 
   // ---------- simulator ----------
   useEffect(() => {
@@ -120,6 +136,7 @@ export function KinesisProvider({ children }) {
       const k = e.key.toLowerCase()
       if (k === '?' || (k === '/' && e.shiftKey)) { setShowKeys((v) => !v); return }
       if (k === 's') { setSpokenScan((v) => !v); return }
+      if (k === 'x') { demoRef.current?.(); return }
       if (modeRef.current !== 'sim') return
       if (k === 'c' || k === 'e') held.add(k)
       if (k === 'b') {
@@ -240,6 +257,9 @@ export function KinesisProvider({ children }) {
           outbox({ kind: 'help', to: CARE_LIST.join(', '), text: 'Maya needs help' })
           speakAsUser('I need help')
           break
+        case 'note':
+          say('Note added')
+          break
         case 'help_clear':
           outbox({ kind: 'message', to: CARE_LIST.join(', '), text: "I'm okay now" })
           break
@@ -260,14 +280,16 @@ export function KinesisProvider({ children }) {
     [send, outbox, say],
   )
 
+  demoRef.current = demoSeizure
+
   const value = useMemo(
     () => ({
       mode, profile, setProfile, quality, powerOn, fixSensor,
       subscribe, emit, send, act, say, toast,
       levelsRef, historyRef, headRef, firedRef,
-      spokenScan, setSpokenScan, showKeys, setShowKeys, server,
+      spokenScan, setSpokenScan, showKeys, setShowKeys, server, demoSeizure, outbox,
     }),
-    [mode, profile, quality, powerOn, fixSensor, subscribe, emit, send, act, say, toast, spokenScan, showKeys, server],
+    [mode, profile, quality, powerOn, fixSensor, subscribe, emit, send, act, say, toast, spokenScan, showKeys, server, demoSeizure, outbox],
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

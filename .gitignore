@@ -12,3 +12,6 @@ app/dist/
 *.wav
 *.mp3
 app/.cache/
+data/logs/
+data/reports/
+data/profile.json

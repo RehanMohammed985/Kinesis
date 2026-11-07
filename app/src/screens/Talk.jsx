@@ -19,12 +19,19 @@ export default function Talk() {
   const [round, setRound] = useState(0)
   const sample = useRef(0)
   const coreReplies = useRef(false)
+  const lastCore = useRef(0)
 
   const ask = useCallback(
     async (h) => {
       setHeard(h)
+      if (k.mode === 'core') {
+        // the core's communication agent answers; fall back if it is slow
+        const asked = performance.now()
+        k.send({ type: 'heard', speaker: h.speaker, text: h.text })
+        await new Promise((r) => setTimeout(r, 3500))
+        if (lastCore.current > asked) return
+      }
       if (CANNED_REPLIES[h.text] && !k.server.replies) { setReplies(CANNED_REPLIES[h.text]); setRound((r) => r + 1); return }
-      if (coreReplies.current) return // the core's agent is answering
       try {
         const r = await fetch('/api/replies', {
           method: 'POST',
@@ -39,7 +46,7 @@ export default function Talk() {
       }
       setRound((r) => r + 1)
     },
-    [k.server.replies],
+    [k.server.replies, k.mode], // eslint-disable-line react-hooks/exhaustive-deps
   )
 
   // the room mic, through the browser's speech recognition
@@ -65,7 +72,7 @@ export default function Talk() {
     () =>
       k.subscribe((msg) => {
         if (msg.type === 'heard') setHeard({ speaker: msg.speaker || 'Someone nearby', text: msg.text })
-        if (msg.type === 'replies') { coreReplies.current = true; setReplies(msg.items.slice(0, 4)); setRound((r) => r + 1) }
+        if (msg.type === 'replies') { coreReplies.current = true; lastCore.current = performance.now(); setReplies(msg.items.slice(0, 4)); setRound((r) => r + 1) }
       }),
     [k],
   )
@@ -79,8 +86,7 @@ export default function Talk() {
       id: 'more', area: 'more', kind: 'quiet', glyph: 'more', label: 'Different replies',
       onSelect: () => {
         sample.current = (sample.current + 1) % HEARD_SAMPLES.length
-        if (coreReplies.current) k.send({ type: 'replies_again' })
-        else ask(listening && heard.speaker === 'Someone nearby' ? heard : HEARD_SAMPLES[sample.current])
+        ask(listening && heard.speaker === 'Someone nearby' ? heard : HEARD_SAMPLES[sample.current])
       },
     },
     { id: 'back', area: 'back', kind: 'quiet', glyph: 'back', label: 'Back', onSelect: () => go('home') },

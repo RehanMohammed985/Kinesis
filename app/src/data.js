@@ -118,8 +118,8 @@ export const REPORT = {
     ['2', 'calls'],
     ['5', 'messages sent'],
     ['1', 'help request'],
-    ['3', 'rest periods'],
-    ['6:40', 'hours worn'],
+    ['0', 'seizure-like episodes'],
+    ['6:40', 'hours monitored'],
   ],
   // signal quality by hour, 0..1
   hours: [0.92, 0.95, 0.9, 0.88, 0.62, 0.58, 0.85, 0.9, 0.93, 0.91, 0.7, 0.86],
@@ -127,6 +127,14 @@ export const REPORT = {
     ['9:12 am', 'My back hurt'],
     ['1:40 pm', 'Muscle cramps'],
   ],
+  brain: {
+    seizure_like: [],
+    rest_periods: 3,
+    rest_minutes: 4.5,
+    alpha_peak_hz: 9.8,
+    baseline_dar: 1.4,
+    alerts: [],
+  },
 }
 
 export const SENSORS = [

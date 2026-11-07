@@ -12,8 +12,11 @@ import json
 import time
 from pathlib import Path
 
+import numpy as np
 import websockets
+from scipy.signal import resample
 
+from kinesis.agent.hub import Hub
 from kinesis.board.knight import Knight
 from kinesis.signal.live import FS, Detectors, quality
 
@@ -49,7 +52,35 @@ async def main():
     print(f"Recording to {rec}")
 
     det = Detectors()
-    state = {"rest_until": time.time() + 5, "fit": True}
+    loop = asyncio.get_running_loop()
+
+    def emit(msg):
+        # Agents run in worker threads; hand their messages back to the loop.
+        loop.call_soon_threadsafe(lambda: asyncio.ensure_future(broadcast(msg)))
+
+    hub = Hub(emit)
+    state = {"rest_until": time.time() + 5, "fit": True, "inject": None}
+
+    # Demo only: mix a real recorded seizure (Bonn dataset, recording S001,
+    # Andrzejak et al. 2001) into the live signal so the real detector can be
+    # shown working. The app labels this as a replay.
+    demo = np.loadtxt(Path(__file__).with_name("agent") / "demo_seizure.txt")
+    demo = resample(demo, int(round(len(demo) * FS / 173.61)))
+    demo = demo / np.std(demo)
+
+    def read(n):
+        eeg, ts = board.latest(n)
+        inj = state["inject"]
+        if inj and eeg.shape[1]:
+            idx = ((ts - inj["start"]) * FS).astype(int)
+            ok = (idx >= 0) & (idx < len(demo))
+            if ok.any():
+                eeg = eeg.copy()
+                for ch in (1, 2, 3, 4):  # occipital only, so the switch detectors never fire
+                    eeg[ch - 1, ok] += demo[idx[ok]] * inj["scale"]
+            elif ts[-1] - inj["start"] > len(demo) / FS:
+                state["inject"] = None
+        return eeg, ts
     profile = {"select": "clench", "back": "blink2", "rest": "alpha"}
     print("Sit still with eyes open for 5 s to set the baseline...")
 
@@ -68,9 +99,14 @@ async def main():
                     board.mark(1)
                 elif kind == "fit":
                     state["fit"] = True
-                elif kind in ("action", "confirm", "cancel"):
-                    # Coupling and agent teams hook in here (call, message, task, media).
-                    print("app:", msg)
+                elif kind == "demo_seizure":
+                    base = hub.monitor.base or {}
+                    rms = float(np.median([base[c]["rms"] for c in (1, 2, 3, 4) if c in base] or [10.0]))
+                    state["inject"] = {"start": time.time() + 1, "scale": 5 * rms}
+                    print("demo: replaying a recorded seizure into the live signal for 23 s")
+                elif kind in ("action", "confirm", "cancel", "heard", "report_request"):
+                    print("app:", {k: v for k, v in msg.items() if k != "type"} or kind)
+                    loop.run_in_executor(None, hub.handle, msg)
         finally:
             clients.discard(ws)
 
@@ -86,25 +122,38 @@ async def main():
         print(f"Core running. On this laptop: ws://localhost:{args.ws_port}")
         print(f"From another laptop on the same wifi, open the app with ?core=ws://{ip}:{args.ws_port}")
         last_q = 0.0
+        last_m = 0.0
         while True:
             await asyncio.sleep(0.05)
             now = time.time()
-            eeg, _ = board.latest(int(2.0 * FS))
+            eeg, _ = board.latest(int(2.0 * FS))  # detectors see the raw signal only
             if eeg.shape[1] < int(1.2 * FS):
                 continue
             if state["rest_until"] and now >= state["rest_until"]:
-                base = det.calibrate_rest(board.latest(int(4.5 * FS))[0])
+                rest = read(int(4.5 * FS))[0]
+                base = det.calibrate_rest(rest)
+                hub.monitor.set_baseline(rest)
                 state["rest_until"] = 0
                 print("Baseline set:", {k: round(float(v), 2) for k, v in base.items()})
                 await broadcast({"type": "calibration", "step": "rest", "progress": 1})
             levels, events = det.update(eeg[:, -int(1.2 * FS):])
+            if args.synthetic:
+                events = []  # synthetic data is meaningless for switches
             await broadcast({"type": "levels", **levels})
             for ev in events:
                 print("event:", ev["input"])
+                hub.monitor.note_event(ev["input"])
                 await broadcast(ev)
             if now - last_q >= 1.0:
                 last_q = now
-                await broadcast({"type": "quality", "channels": quality(eeg)})
+                q = quality(eeg)
+                hub.monitor.note_quality(q)
+                await broadcast({"type": "quality", "channels": q})
+            if now - last_m >= 2.0:
+                last_m = now
+                window = read(int(4.0 * FS))[0]
+                if window.shape[1] >= int(4.0 * FS):
+                    loop.run_in_executor(None, hub.monitor.feed, window, levels)
 
 
 if __name__ == "__main__":
