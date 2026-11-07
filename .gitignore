@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+data/raw/*
+data/sessions/*
+!data/raw/.gitkeep
+!data/sessions/.gitkeep
+profiles/
+app/node_modules/
+app/dist/
+*.wav
+*.mp3
