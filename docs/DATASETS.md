@@ -22,5 +22,5 @@ Kinesis does not need a trained model to work. Every detector is a threshold or 
 ## Deliverables from the data team by hour 12
 1. `replay.py` working on our recordings
 2. Threshold recommendations for EMG, blink, alpha from our data
-3. OpenBMI SSVEP results table for CCA vs TRCA at 1 s / 2 s windows on Oz/O1/O2/POzannels
+3. OpenBMI SSVEP results table for CCA vs TRCA at 1 s / 2 s windows on Oz/O1/O2/POz
 4. The results slide numbers, filled in from every teammate's run

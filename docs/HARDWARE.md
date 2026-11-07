@@ -32,7 +32,7 @@ We have 6 electrodes. One forehead sensor is enough for blinks (a blink is hundr
 - The Fit screen will flag the exact electrode to fix; do not guess.
 
 ## Contact check in the EXG Visualizer (before any code)
-1. Open the Visualizer, pick the port (top right). IMU box: choose Knight Board IMU.
+1. Open the Visualizer, pick the port (top right). Board type: Knight Board (not IMU).
 2. Activate channels one at a time: Active, then Route RLD, wait for the trace.
 3. Eyes closed 3 s: a clean ~10 Hz wave on channels 1-4.
 4. Blink: spike on 5. Clench: channel 6 goes wild.
