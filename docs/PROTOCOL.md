@@ -40,7 +40,9 @@ Progress through the cued steps. The final message carries the profile.
 ```json
 {"type": "calibration", "step": "clench", "progress": 0.6}
 {"type": "calibration", "done": true, "profile": {"select": "clench", "back": "blink2", "rest": "alpha", "scores": {"clench": 3.1, "blink2": 2.4, "alpha": 1.8, "look": 1.2}}}
+{"type": "calibration", "step": "model", "ok": true, "frames": {"rest": 180, "clench": 95, "blink2": 88}, "accuracy": {"rest": 1.0, "clench": 0.97, "blink2": 0.95}, "channels": [3, 4, 6, 7], "pooled_with_team_frames": 1402}
 ```
+During the clench and double-blink steps the core counts each attempt and sends it as an `event` with that step's input, so the app's counter moves. When the app moves past those steps, the core trains this person's gesture model (`step: model`), saves it to data/gesture_model.json and uses it from then on. `ok: false` means too few clean attempts; the previous model stays.
 
 ### heard
 The room mic transcript for conversation mode.
@@ -78,6 +80,8 @@ From the report agent, in answer to `report_request` or `action: report`. `file`
 
 ```json
 {"type": "calibrate", "step": "rest"}
+{"type": "calibrate", "step": "clench"}
+{"type": "look", "on": true}
 {"type": "action", "action": "speak", "text": "Pretty well, thanks"}
 {"type": "action", "action": "call", "contact": "linda"}
 {"type": "action", "action": "message", "contact": "maria", "text": "I'm okay"}
@@ -92,7 +96,7 @@ From the report agent, in answer to `report_request` or `action: report`. `file`
 {"type": "report_request"}
 {"type": "demo_seizure"}
 ```
-`heard` asks the communication agent for replies. `demo_seizure` mixes a real recorded seizure (Bonn dataset) into the live signal for 23 s so the real detector can be shown; the app labels it as a replay.
+`calibrate` marks each cued step (rest, clench, blink2, then anything else ends the gesture steps and trains the model). `look` turns the SSVEP decoder on while the Look screen is open; the core then adds `look` to `levels` and sends `event` with `input: look, target: 0-3`. `heard` asks the communication agent for replies. `demo_seizure` mixes a real recorded seizure (Bonn dataset) into the live signal for 23 s so the real detector can be shown; the app labels it as a replay.
 
 ## Simulator keys (app runs without the core)
 - Hold **C**: clench rises, fires at threshold

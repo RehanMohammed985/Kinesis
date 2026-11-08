@@ -7,9 +7,9 @@ cp .env.example .env        # add ElevenLabs and Gemini keys (optional)
 npm run dev                 # http://localhost:5173
 ```
 
-- Runs with or without the headset. With no core on ws://localhost:8765 it uses the simulator. Press ? for keys (hold C clench, B B double blink, hold E eyes closed, 1-4 look).
+- Runs with or without the headset. The dev server forwards /core to the core (ws://localhost:8765, or KINESIS_CORE in .env); with no core it uses the simulator. Press ? for keys (hold C clench, B B double blink, hold E eyes closed, 1-4 look).
 - Start on a specific screen: http://localhost:5173/?start=home (fit, calibrate, home, talk, call, tasks, plan, media, report, look, help)
-- Caregiver view on any phone on the same wifi: run `npm run dev -- --host`, then open http://<laptop-ip>:5173/#/caregiver
+- Caregiver view on any phone on the same wifi: `npm run dev` already listens on the wifi; open http://<laptop-ip>:5173/#/caregiver
 - Own voice: ELEVENLABS_API_KEY + ELEVENLABS_VOICE_ID in .env. Each phrase is cached in app/.cache/tts after first use, so demo reruns cost no credits.
 - Replies: GEMINI_API_KEY in .env. Without it, canned replies.
 - Protocol with the Python core: docs/PROTOCOL.md. Design: docs/DESIGN.md.
@@ -31,4 +31,4 @@ The listening part of Talk needs the microphone, which Safari only allows over h
 2. **Get it done** → "Refill my prescription": the agent shows its plan, calls the pharmacy, texts Linda.
 3. **Call or text** → Linda → "Can you come here?" (shows up live on the caregiver page on a phone) or **Call Linda**.
 
-Voice: `python scripts/setup_voice.py check`, then `clone` or `use`, then `curl -X POST http://localhost:5173/api/prewarm`.
+Voice: `python scripts/setup_voice.py check`, then `clone` or `use`, then `curl -X POST http://localhost:5173/api/prewarm`. Full guide: docs/SETUP.md.

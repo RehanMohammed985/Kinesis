@@ -36,8 +36,8 @@ Our headset has the electrodes on **pins 2 to 7** (the recordings show pins 1 an
 ## Contact check in the EXG Visualizer (before any code)
 1. Open the Visualizer, pick the port (top right). Board type: Knight Board (not IMU).
 2. Activate channels one at a time: Active, then Route RLD, wait for the trace.
-3. Eyes closed 3 s: a clean ~10 Hz wave on channels 1-4.
-4. Blink: spike on 5. Clench: channel 6 goes wild.
+3. Eyes closed 3 s: a clean ~10 Hz wave on pins 2-5 (needs good contact at the back).
+4. Blink: spike on pin 6. Clench: every channel bursts, pin 7 most.
 5. Close the Visualizer. The serial port is exclusive; BrainFlow cannot open it while the Visualizer holds it.
 
 ## Board facts
