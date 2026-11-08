@@ -13,9 +13,9 @@ Kinesis gives people who cannot move or speak a way to talk in their own voice, 
 
 <br/>
 
-| 95% | 90% | 94% | 5 min |
+| 3 | 95% | 94% | 5 min |
 |:---:|:---:|:---:|:---:|
-| look-to-choose accuracy in 2 s,<br/>35 people, our 4 channels | double blinks caught<br/>on our own headset | seizure recordings flagged<br/>(Bonn dataset) | setup: contact check<br/>and a 1-minute calibration |
+| public labeled EEG datasets,<br/>60 people, our models built and scored on them | look-to-choose accuracy in 2 s<br/>(Tsinghua benchmark, 35 people) | seizure recordings flagged<br/>(Bonn epilepsy dataset) | setup: contact check<br/>and a 1-minute calibration |
 
 </div>
 
@@ -27,6 +27,7 @@ Kinesis gives people who cannot move or speak a way to talk in their own voice, 
 - [Who it is for](#who-it-is-for)
 - [How it works](#how-it-works)
 - [Technical deep dive](#technical-deep-dive)
+- [Datasets](#datasets)
 - [Validation](#validation)
 - [Screens](#screens)
 - [Quick start](#quick-start)
@@ -210,6 +211,24 @@ Code: `kinesis/agent/`.
   - core to app: `hello`, `levels`, `event`, `quality`, `calibration`, `replies`, `plan`, `step`, `alert`, `notice`, `report`
   - app to core: `action`, `confirm`, `cancel`, `calibrate`, `look`, `heard`, `report_request`, `demo_seizure`
 
+## Datasets
+
+**Primary data: public, labeled EEG datasets.** The decoders are built and scored on these, with only the channels and sample rate our headset has. Download and labels: `python scripts/get_datasets.py` and [docs/DATASETS.md](docs/DATASETS.md).
+
+| Dataset | People | What is labeled | Size | We use it for |
+|---|---|---|---|---|
+| [Tsinghua SSVEP benchmark](http://bci.med.tsinghua.edu.cn/download.html) (Wang et al. 2017) | 35 | Which of 40 flashing targets (8 to 15.8 Hz) the person looked at, 6 blocks each | 64 ch, 250 Hz, 8,400 trials | Look to choose: decoder design, tuning and validation |
+| [2020 BCI Competition track 3](https://nemar.org/dataset/nm000113) (imagined speech, NEMAR nm000113) | 15 | Which of 5 phrases was imagined: Hello, Help me, Stop, Thank you, Yes | 64 ch, 256 Hz, 6,000 trials | Words pipeline: training and held-out scoring, 64 channels vs our 6 |
+| [Bonn epilepsy dataset](https://www.ukbonn.de/epileptologie/arbeitsgruppen/ag-lehnertz-neurophysik/downloads/) (Andrzejak et al. 2001) | 10 | Healthy eyes open, healthy eyes closed, interictal (2 sites), seizure | 500 single-channel recordings, 23.6 s each | Brain monitor: seizure-like rule and its false-alarm rate |
+
+**Baseline data: our own headset.** Short recordings to check contact, set each person's rest level and seed the gesture model, since no public dataset has jaw clenches and double blinks on this board.
+
+| Recording | What | Use |
+|---|---|---|
+| `kinesis/data/baseline/` | 3 trials: eyes open and closed, jaw clenches | Contact check and rest baseline |
+| `kinesis/data/gestures/` | 5 trials: clenches and double blinks, sections marked | Seed for the per-person gesture model |
+| `kinesis/data/words/` | 18 imagined yes/no trials | Checks the words result on our own headset |
+
 ## Validation
 
 Every number comes from a script in this repo. Full write-up: [docs/VALIDATION.md](docs/VALIDATION.md).
@@ -225,13 +244,13 @@ Every number comes from a script in this repo. Full write-up: [docs/VALIDATION.m
 
 | What | Data | Result |
 |---|---|---|
-| Look to choose | Tsinghua SSVEP benchmark, 35 people, 4 targets, our 4 channels at 125 Hz | 95.0% at 2 s (87.5% at 1 s, 97.5% at 3 s). Live decoder: first choice right 93.1%, wrong 0.2%, median 2.2 s |
-| False looks | Our headset, 100 s with nothing flashing | 1 false choice |
-| Double blink | Our headset, 5 trials, each scored by a model trained on the other 4 | 64 of 71 caught, none read as a clench. Fixed rules caught 0 |
+| Look to choose | **Public:** Tsinghua SSVEP benchmark, 35 people, 4 targets, our 4 channels at 125 Hz | 95.0% at 2 s (87.5% at 1 s, 97.5% at 3 s). Live decoder: first choice right 93.1%, wrong 0.2%, median 2.2 s |
+| False looks | **Baseline:** our headset, 100 s with nothing flashing | 1 false choice |
+| Double blink | **Baseline:** our headset, 5 trials, each scored by a model trained on the other 4 | 64 of 71 caught, none read as a clench. Fixed rules caught 0 |
 | Clench | Same | 31 of 41 caught, 1 read as a double blink. 2 false events in 145 s still |
-| Seizure-like | Bonn epilepsy dataset | 94% of seizure recordings flagged, 3% of non-seizure (same patients); 75% and 0% against healthy scalp recordings |
-| Imagined words | 2020 BCI Competition track 3, 15 people | 41.5% on 5 words with 64 channels (chance 20%, all 15 above chance); 26.0% with our 6 electrodes |
-| Imagined yes/no | Our headset, 18 trials | No difference between words (chance) |
+| Seizure-like | **Public:** Bonn epilepsy dataset, 500 labeled recordings | 94% of seizure recordings flagged, 3% of non-seizure (same patients); 75% and 0% against healthy scalp recordings |
+| Imagined words | **Public:** 2020 BCI Competition track 3, 15 people | 41.5% on 5 words with 64 channels (chance 20%, all 15 above chance); 26.0% with our 6 electrodes |
+| Imagined yes/no | **Baseline:** our headset, 18 trials | No difference between words (chance) |
 
 **Limits we report plainly:**
 
@@ -260,6 +279,7 @@ Every number comes from a script in this repo. Full write-up: [docs/VALIDATION.m
 git clone https://github.com/RehanMohammed985/Kinesis.git && cd Kinesis
 pip install -r requirements.txt
 cd app && npm install && cd ..
+python scripts/get_datasets.py              # the public labeled datasets, into data/external/
 python -m kinesis.server --synthetic        # or --port <serial port> with the headset
 cd app && npm run dev                       # open http://localhost:5173
 ```
