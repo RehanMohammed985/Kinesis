@@ -17,7 +17,8 @@ import numpy as np
 from scipy.signal import butter, sosfiltfilt
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from kinesis.board.knight import Knight  # noqa: E402
+from kinesis.board.knight import MAINS_HZ, Knight  # noqa: E402
+from scipy.signal import filtfilt, iirnotch  # noqa: E402
 from kinesis.montage import MONTAGE  # noqa: E402
 
 
@@ -59,31 +60,33 @@ def check(port, seconds=8):
         return False
     eeg = data[k.eeg_rows]
     sos = butter(2, [1, 40], btype="band", fs=125, output="sos")
-    line = butter(4, [45, 60], btype="band", fs=125, output="sos")
-    stds = {}
+    b, a = iirnotch(MAINS_HZ, 30.0, fs=125)
+    stds, hum = {}, {}
     for pin in range(1, 9):
         x = eeg[pin - 1] - eeg[pin - 1].mean()
-        stds[pin] = float(np.std(sosfiltfilt(sos, x))) if np.std(x) > 0 else 0.0
-    used = [stds[p] for p in MONTAGE if stds[p] > 0.5]
-    typical = float(np.percentile(used, 25)) if used else 0.0
-    print("  pin  site  spread 1-40 Hz (uV)  verdict")
+        if np.std(x) == 0:
+            stds[pin], hum[pin] = 0.0, 0.0
+            continue
+        clean = filtfilt(b, a, x)
+        stds[pin] = float(np.std(sosfiltfilt(sos, clean)))
+        hum[pin] = float(np.std(x - clean) / (np.std(sosfiltfilt(sos, clean)) + 1e-9))
+    used = [stds[p] for p in MONTAGE if stds[p] > 0]
+    typical = float(np.median(used)) if used else 0.0
+    print(f"  pin  site   signal  hum x signal  verdict   ({MAINS_HZ:.0f} Hz hum is filtered out in Kinesis)")
     for pin in range(1, 9):
         site = MONTAGE.get(pin, "-")
-        x = eeg[pin - 1] - eeg[pin - 1].mean()
         s = stds[pin]
         if pin not in MONTAGE:
             verdict = "not used"
-        elif np.std(x) < 0.5:
-            verdict = "FLAT: switched off or no signal at all"
-        elif typical and s > 10 * typical:
-            verdict = "FLOATING: not touching skin, re-seat it"
-        elif np.mean(sosfiltfilt(line, x) ** 2) > 0.6 * np.mean(sosfiltfilt(sos, x) ** 2):
-            verdict = "NOISY: mains hum, check the ear clip and unplug the charger"
-        elif s > 200:
-            verdict = "very large: loose contact or moving"
+        elif s == 0:
+            verdict = "FLAT: this sensor never switched on (Kinesis now retries; replug the board if it stays flat)"
+        elif typical and s > 5 * typical:
+            verdict = "FLOATING: much bigger than the others, not touching skin; part the hair and press it in"
+        elif hum[pin] > 3:
+            verdict = "weak contact: mostly hum; press it in, check the ear clip, unplug the charger"
         else:
-            verdict = "ok, touching skin"
-        print(f"  {pin:>3}  {site:<4}  {s:>18.1f}  {verdict}")
+            verdict = "ok"
+        print(f"  {pin:>3}  {site:<4} {s:>8.0f}  {hum[pin]:>12.1f}  {verdict}")
     flat = [p for p in MONTAGE if np.std(eeg[p - 1]) < 0.5]
     if len(flat) == len(MONTAGE):
         print("  all sensors flat: the board streams but the channels never switched on. Restart the board (unplug, replug) and run this again.")

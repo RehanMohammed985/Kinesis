@@ -5,10 +5,15 @@ exposes the latest window of samples in microvolts, and can record to disk.
 Use synthetic=True to develop without a headset.
 """
 import json
+import os
 import time
 
 import numpy as np
 from brainflow.board_shim import BoardIds, BoardShim, BrainFlowInputParams
+from scipy.signal import filtfilt, iirnotch
+
+# Mains hum: 60 Hz in the US, 50 Hz in most other places (KINESIS_MAINS=50).
+MAINS_HZ = float(os.environ.get("KINESIS_MAINS", "60"))
 
 from kinesis.montage import MONTAGE  # pin -> site; our electrodes are on pins 2-7
 
@@ -41,21 +46,63 @@ class Knight:
         self.shim.start_stream(450000)
         if self.synthetic:
             return
-        # Channels are off after connect. Commands sent too fast are dropped.
-        time.sleep(2)
+        # Channels are off after connect. Commands sent too fast are dropped,
+        # and the board prints start-up bytes first ("Wrong end byte"), so wait
+        # them out, switch every channel on, then check and retry any that
+        # still read exactly zero.
+        time.sleep(3)
         for ch, gain in self.gains.items():
-            time.sleep(0.5)
-            self.shim.config_board(f"chon_{ch}_{gain}")
-            time.sleep(1)
-            self.shim.config_board(f"rldadd_{ch}")
-            time.sleep(0.5)
+            self._switch_on(ch, gain)
+        self.off = self._retry_flat()
+
+    def _switch_on(self, ch, gain, slow=1.0):
+        time.sleep(0.5 * slow)
+        self.shim.config_board(f"chon_{ch}_{gain}")
+        time.sleep(1.0 * slow)
+        self.shim.config_board(f"rldadd_{ch}")
+        time.sleep(0.5 * slow)
+
+    def _flat(self):
+        time.sleep(1.5)
+        data = self.shim.get_current_board_data(int(self.fs))
+        eeg = data[self.eeg_rows, :]
+        if eeg.shape[1] < 10:
+            return list(self.gains)
+        return [ch for ch in self.gains if np.std(eeg[ch - 1]) < 1e-6]
+
+    def _retry_flat(self, tries=3):
+        flat = self._flat()
+        for attempt in range(1, tries + 1):
+            if not flat:
+                print(f"All {len(self.gains)} sensors switched on.")
+                return []
+            print(f"Sensors on pins {flat} did not switch on. Trying again ({attempt} of {tries})...")
+            for ch in flat:
+                self._switch_on(ch, self.gains[ch], slow=2.0)
+            flat = self._flat()
+        if flat:
+            print(f"Pins {flat} still read nothing. Unplug and replug the board, then start again.")
+        else:
+            print(f"All {len(self.gains)} sensors switched on.")
+        return flat
 
     def latest(self, n_samples):
         """Non-destructive read of the most recent n samples.
         Returns (eeg[channels x samples] in uV, timestamps)."""
         data = self.shim.get_current_board_data(n_samples)
         eeg = data[self.eeg_rows, :]
+        if not self.synthetic and eeg.shape[1] > 30:
+            eeg = self._denoise(eeg)
         return eeg, data[self.ts_row, :]
+
+    def _denoise(self, eeg):
+        """Remove mains hum, which dry electrodes pick up strongly."""
+        if not hasattr(self, "_notch"):
+            self._notch = iirnotch(MAINS_HZ, 30.0, fs=self.fs) if MAINS_HZ < self.fs / 2 else None
+        if self._notch is None:
+            return eeg
+        b, a = self._notch
+        return filtfilt(b, a, eeg, axis=1, padlen=min(eeg.shape[1] - 1, 30))
 
     def latest_seconds(self, seconds):
         return self.latest(int(seconds * self.fs))
