@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js'
 import { CANNED_REPLIES, QUICK_TEXTS, SAY } from './src/data.js'
 
 // Server-side helpers for the demo. Keys live in app/.env (never committed)
@@ -29,21 +30,22 @@ function kinesisServer(env) {
       })
     })
 
+  // The official ElevenLabs SDK. The key comes from app/.env (loaded below
+  // with Vite's loadEnv), never from code, and never reaches the browser.
+  const eleven = env.ELEVENLABS_API_KEY ? new ElevenLabsClient({ apiKey: env.ELEVENLABS_API_KEY }) : null
+
   const tts = async (text) => {
     const model = env.ELEVENLABS_MODEL || 'eleven_flash_v2_5'
     const key = createHash('sha1').update(`${env.ELEVENLABS_VOICE_ID}|${model}|${text}`).digest('hex')
     const file = join(cacheDir, `${key}.mp3`)
     if (!existsSync(file)) {
-      const r = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${env.ELEVENLABS_VOICE_ID}?output_format=mp3_44100_128`,
-        {
-          method: 'POST',
-          headers: { 'xi-api-key': env.ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, model_id: model }),
-        },
-      )
-      if (!r.ok) throw new Error(`ElevenLabs ${r.status}: ${await r.text()}`)
-      writeFileSync(file, Buffer.from(await r.arrayBuffer()))
+      if (!eleven) throw new Error('Set ELEVENLABS_API_KEY in app/.env')
+      const audio = await eleven.textToSpeech.convert(env.ELEVENLABS_VOICE_ID, {
+        text,
+        modelId: model,
+        outputFormat: 'mp3_44100_128',
+      })
+      writeFileSync(file, Buffer.from(await new Response(audio).arrayBuffer()))
     }
     return file
   }

@@ -15,7 +15,7 @@ Kinesis gives people who cannot move or speak a way to talk in their own voice, 
 
 | 3 | 95% | 94% | 5 min |
 |:---:|:---:|:---:|:---:|
-| public labeled EEG datasets,<br/>60 people, our models built and scored on them | look-to-choose accuracy in 2 s<br/>(Tsinghua benchmark, 35 people) | seizure recordings flagged<br/>(Bonn epilepsy dataset) | setup: contact check<br/>and a 1-minute calibration |
+| public labeled EEG datasets<br/>used to build and score it, 60 people | look-to-choose accuracy in 2 s<br/>(Tsinghua benchmark, 35 people) | seizure recordings flagged<br/>(Bonn epilepsy dataset) | setup: contact check<br/>and a 1-minute calibration |
 
 </div>
 
@@ -213,7 +213,7 @@ Code: `kinesis/agent/`.
 
 ## Datasets
 
-**Primary data: public, labeled EEG datasets.** The decoders are built and scored on these, with only the channels and sample rate our headset has. Download and labels: `python scripts/get_datasets.py` and [docs/DATASETS.md](docs/DATASETS.md).
+**Public labeled datasets.** Used to build and score the decoders, with only the channels and sample rate our headset has. Download and labels: `python scripts/get_datasets.py` and [docs/DATASETS.md](docs/DATASETS.md).
 
 | Dataset | People | What is labeled | Size | We use it for |
 |---|---|---|---|---|
@@ -221,7 +221,7 @@ Code: `kinesis/agent/`.
 | [2020 BCI Competition track 3](https://nemar.org/dataset/nm000113) (imagined speech, NEMAR nm000113) | 15 | Which of 5 phrases was imagined: Hello, Help me, Stop, Thank you, Yes | 64 ch, 256 Hz, 6,000 trials | Words pipeline: training and held-out scoring, 64 channels vs our 6 |
 | [Bonn epilepsy dataset](https://www.ukbonn.de/epileptologie/arbeitsgruppen/ag-lehnertz-neurophysik/downloads/) (Andrzejak et al. 2001) | 10 | Healthy eyes open, healthy eyes closed, interictal (2 sites), seizure | 500 single-channel recordings, 23.6 s each | Brain monitor: seizure-like rule and its false-alarm rate |
 
-**Baseline data: our own headset.** Short recordings to check contact, set each person's rest level and seed the gesture model, since no public dataset has jaw clenches and double blinks on this board.
+**Baseline recordings from our headset.** Short recordings to check contact, set each person's rest level and seed the gesture model, since no public dataset has jaw clenches and double blinks on this board.
 
 | Recording | What | Use |
 |---|---|---|

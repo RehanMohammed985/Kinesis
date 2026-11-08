@@ -1,10 +1,10 @@
 # Datasets
 
-Kinesis is built and scored on **public, labeled EEG datasets**, using only what our headset has (its channels and 125 Hz). Our own recordings are the **baseline**: contact checks, each person's rest level, and the seed for the gesture model.
+Kinesis uses three **public, labeled EEG datasets**, with only what our headset has (its channels and 125 Hz), and **baseline recordings** from our own headset: contact checks, each person's rest level, and the seed for the gesture model.
 
 Download the public sets and see their labels: `python scripts/get_datasets.py` (saves to `data/external/`, kept out of git).
 
-## Primary: public labeled datasets
+## Public labeled datasets
 
 ### Tsinghua SSVEP benchmark
 - **Source:** http://bci.med.tsinghua.edu.cn/download.html
@@ -54,7 +54,7 @@ Download the public sets and see their labels: `python scripts/get_datasets.py` 
   - Against healthy scalp: 75% flagged, 0% false.
   - Script: `scripts/validate_seizure.py`.
 
-## Baseline: our own headset
+## Baseline recordings: our own headset
 
 No public dataset has jaw clenches and double blinks on a NeuroPawn Knight with dry electrodes, so these are ours. They are labeled by protocol: each section is marked in the file next to it.
 
