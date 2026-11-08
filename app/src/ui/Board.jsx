@@ -7,11 +7,14 @@ import Glyph from './Glyph.jsx'
 // person's SELECT input commits the item under the lens, BACK goes back,
 // REST pauses. A click or tap commits directly (for caregivers and testing).
 //
-// items: [{ id, label, sub, glyph, kind, area, avatar, onSelect }]
-// layout: { columns, rows, areas } as CSS grid strings
+// items: [{ id, label, sub, glyph, kind, area, avatar, extra, onSelect }]
+// layout: { columns, rows, areas } as CSS grid strings, plus an optional
+// layout.phone used on narrow screens (phones held upright)
 export default function Board({ items, layout, help = true, onHelp, onBack, startAt = 0, dwell = 1800, scanKey }) {
   const k = useKinesis()
-  const all = help ? [...items, { id: '__help', label: 'I need help', sub: 'Alerts Sam and the nurse line', glyph: 'help', help: true, onSelect: onHelp }] : items
+  const narrow = useNarrow()
+  const grid = narrow && layout.phone ? layout.phone : layout
+  const all = help ? [...items, { id: '__help', label: 'I need help', sub: 'Alerts Linda and the nurse line', glyph: 'help', help: true, onSelect: onHelp }] : items
   const [index, setIndex] = useState(startAt)
   const [paused, setPaused] = useState(false)
   const [committed, setCommitted] = useState(null)
@@ -119,7 +122,7 @@ export default function Board({ items, layout, help = true, onHelp, onBack, star
     <div ref={wrapRef} style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 'var(--gap)' }}>
       <div
         className="board"
-        style={{ gridTemplateColumns: layout.columns, gridTemplateRows: layout.rows, gridTemplateAreas: layout.areas }}
+        style={{ gridTemplateColumns: grid.columns, gridTemplateRows: grid.rows, gridTemplateAreas: grid.areas }}
       >
         {gridItems.map((it) => (
           <button
@@ -135,6 +138,7 @@ export default function Board({ items, layout, help = true, onHelp, onBack, star
               <span className="cell-label">{it.label}</span>
               {it.sub && <span className="cell-sub">{it.sub}</span>}
             </span>
+            {it.extra && <span className="cell-extra">{it.extra}</span>}
           </button>
         ))}
       </div>
@@ -156,6 +160,18 @@ export default function Board({ items, layout, help = true, onHelp, onBack, star
       {paused && <div className="resting">Resting. {restHint(k.profile)}</div>}
     </div>
   )
+}
+
+function useNarrow() {
+  const q = '(max-width: 700px)'
+  const [narrow, setNarrow] = useState(() => window.matchMedia(q).matches)
+  useEffect(() => {
+    const m = window.matchMedia(q)
+    const on = () => setNarrow(m.matches)
+    m.addEventListener('change', on)
+    return () => m.removeEventListener('change', on)
+  }, [])
+  return narrow
 }
 
 function restHint(profile) {

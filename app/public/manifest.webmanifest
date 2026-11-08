@@ -1,0 +1,16 @@
+{
+  "name": "Kinesis",
+  "short_name": "Kinesis",
+  "description": "Run your day with your mind: talk in your own voice, call, text and get things done.",
+  "start_url": "/?start=home",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#DCE1DD",
+  "theme_color": "#DCE1DD",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

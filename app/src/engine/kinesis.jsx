@@ -14,7 +14,12 @@ const LANES = ['clench', 'blink', 'alpha']
 const HISTORY = 240 // samples per lane, ~8 s at 30 Hz
 export const LEVEL_KEY = { clench: 'clench', blink2: 'blink', alpha: 'alpha', look: 'look' }
 
-const coreUrl = () => new URLSearchParams(location.search).get('core') || 'ws://localhost:8765'
+// The dev server forwards /core to the Kinesis core (app/vite.config.js), so a
+// phone or iPad that opened this page reaches the headset through the same
+// address. ?core=ws://host:8765 still connects straight to a core elsewhere.
+const coreUrl = () =>
+  new URLSearchParams(location.search).get('core') ||
+  `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/core`
 
 const initialQuality = () =>
   SENSORS.map((s) => ({ ch: s.ch, site: s.site, state: 'off', reason: 'off' }))
@@ -119,7 +124,7 @@ export function KinesisProvider({ children }) {
     }
     setTimeout(() => {
       const when = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase()
-      emit({ type: 'alert', kind: 'seizure_like', text: `Kinesis detected seizure-like brain activity on Maya at ${when}. Please check on them now.` })
+      emit({ type: 'alert', kind: 'seizure_like', text: `Kinesis detected seizure-like brain activity on Walter at ${when}. Please check on them now.` })
     }, 8000)
   }, [send, emit])
 
@@ -237,7 +242,7 @@ export function KinesisProvider({ children }) {
     fetch('/api/outbox', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: 'Maya', ...msg }),
+      body: JSON.stringify({ from: 'Walter', ...msg }),
     }).catch(() => {})
   }, [])
 
@@ -254,7 +259,7 @@ export function KinesisProvider({ children }) {
           say(`Sent to ${contact?.name}`)
           break
         case 'help':
-          outbox({ kind: 'help', to: CARE_LIST.join(', '), text: 'Maya needs help' })
+          outbox({ kind: 'help', to: CARE_LIST.join(', '), text: 'Walter needs help' })
           speakAsUser('I need help')
           break
         case 'note':

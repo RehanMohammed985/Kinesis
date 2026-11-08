@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import '../styles.css'
 
-// What a caregiver sees on their phone: only the messages Maya chose to send.
+// What a caregiver sees on their phone: only the messages Walter chose to send.
 // Open http://<laptop-ip>:5173/#/caregiver on any phone on the same wifi.
 const LABEL = { help: 'Needs help', message: 'Message', call: 'Calling you', report: 'Report sent' }
 
@@ -49,9 +49,9 @@ export default function Caregiver() {
 
   return (
     <main className="care">
-      <h1>Messages from Maya</h1>
-      <p className="who">{live ? 'Live. Only what Maya chooses to send shows up here.' : 'Connecting to Maya\'s Kinesis.'}</p>
-      {items.length === 0 && <p className="empty">Nothing yet. When Maya sends a message or asks for help, it appears here.</p>}
+      <h1>Messages from Walter</h1>
+      <p className="who">{live ? 'Live. Only what Walter chooses to send shows up here.' : 'Connecting to Walter\'s Kinesis.'}</p>
+      {items.length === 0 && <p className="empty">Nothing yet. When Walter sends a message or asks for help, it appears here.</p>}
       {items.map((m, i) => (
         <article key={`${m.at}-${i}`} className={`msg ${m.kind}`}>
           <span className="meta">{LABEL[m.kind] || 'Update'}{m.to ? `, to ${m.to}` : ''}, {when(m.at)}</span>

@@ -1,21 +1,59 @@
 {
-  "name": "Maya",
-  "full_name": "Maya Okafor",
-  "about": "34, ALS diagnosed 2 years ago, former high school chemistry teacher, lives with her partner Sam in Raleigh",
+  "name": "Walter",
+  "full_name": "Walter Reyes",
+  "about": "72, had a stroke 18 months ago that took most of his speech and the use of his right side, retired city bus driver, lives with his wife Linda in Raleigh",
   "address": "Raleigh, NC",
   "contacts": {
-    "mom": {"name": "Mom", "full_name": "Ada Okafor", "phone": "+15555550101", "relation": "mother"},
-    "sam": {"name": "Sam", "phone": "+15555550102", "relation": "partner"},
-    "dr_patel": {"name": "Dr. Patel", "phone": "+15555550103", "email": "dr.patel@example.org", "relation": "neurologist"},
-    "nurse": {"name": "Nurse line", "phone": "+15555550104", "relation": "24 hour nurse line"},
-    "ama": {"name": "Ama", "phone": "+15555550105", "relation": "sister"}
+    "linda": {
+      "name": "Linda",
+      "phone": "+15555550101",
+      "relation": "wife"
+    },
+    "maria": {
+      "name": "Maria",
+      "phone": "+15555550102",
+      "relation": "daughter"
+    },
+    "david": {
+      "name": "David",
+      "phone": "+15555550105",
+      "relation": "son"
+    },
+    "dr_patel": {
+      "name": "Dr. Patel",
+      "phone": "+15555550103",
+      "email": "dr.patel@example.org",
+      "relation": "neurologist"
+    },
+    "nurse": {
+      "name": "Nurse line",
+      "phone": "+15555550104",
+      "relation": "24 hour nurse line"
+    },
+    "grace": {
+      "name": "Grace",
+      "phone": "+15555550106",
+      "relation": "home aide"
+    }
   },
-  "care_list": ["sam", "nurse"],
+  "care_list": [
+    "linda",
+    "nurse"
+  ],
   "doctor": "dr_patel",
-  "pharmacy": {"name": "Walgreens, Hillsborough St", "phone": "+15555550199"},
-  "medications": [{"name": "Riluzole", "dose": "50 mg", "last_filled": "Oct 9"}],
+  "pharmacy": {
+    "name": "Walgreens, Hillsborough St",
+    "phone": "+15555550199"
+  },
+  "medications": [
+    {
+      "name": "Clopidogrel",
+      "dose": "75 mg",
+      "last_filled": "Oct 9"
+    }
+  ],
   "safety_alerts": {
     "seizure_like": true,
-    "slowing_change": false
+    "slowing_change": true
   }
 }

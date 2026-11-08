@@ -5,8 +5,26 @@
 // The guide voice reads options during spoken scanning. It is only for the
 // user, so it uses free system speech and never spends credits.
 
-let current = null
+// One audio element for the whole session. iPhone and iPad only let a page
+// play sound after the person has touched it once; the first tap anywhere
+// plays a silent clip on this element, and from then on it can play phrases
+// chosen by headset inputs too.
+const player = typeof Audio !== 'undefined' ? new Audio() : null
+const SILENT = 'data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA'
 const memo = new Map()
+let unlocked = false
+
+export function unlockAudio() {
+  if (unlocked || !player) return
+  unlocked = true
+  player.src = SILENT
+  player.play().catch(() => { unlocked = false })
+  if ('speechSynthesis' in window) {
+    const u = new SpeechSynthesisUtterance(' ')
+    u.volume = 0
+    window.speechSynthesis.speak(u)
+  }
+}
 
 export async function speakAsUser(text) {
   if (!text) return
@@ -23,8 +41,8 @@ export async function speakAsUser(text) {
       url = URL.createObjectURL(await r.blob())
       memo.set(text, url)
     }
-    current = new Audio(url)
-    await current.play()
+    player.src = url
+    await player.play()
   } catch {
     systemSay(text, { rate: 1 })
   }
@@ -45,9 +63,6 @@ function systemSay(text, { rate = 1, volume = 1 } = {}) {
 }
 
 export function stopAll() {
-  if (current) {
-    current.pause()
-    current = null
-  }
+  if (player && !player.paused) player.pause()
   if ('speechSynthesis' in window) window.speechSynthesis.cancel()
 }
