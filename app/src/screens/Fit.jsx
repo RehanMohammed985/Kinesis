@@ -23,7 +23,9 @@ export default function Fit() {
   const { go } = useNav()
   useEffect(() => { k.powerOn() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const q = Object.fromEntries(k.quality.map((c) => [c.ch, c]))
+  // Without the core there is no headset to read: show nothing rather than pretend numbers.
+  const live = k.mode === 'core'
+  const q = live ? Object.fromEntries(k.quality.map((c) => [c.ch, c])) : {}
   const off = k.quality.filter((c) => c.state === 'off').length
   const good = k.quality.filter((c) => c.state === 'good').length
   const issues = k.quality.filter((c) => c.state === 'fair' || c.state === 'bad')
@@ -60,10 +62,10 @@ export default function Fit() {
       </svg>
 
       <div className="fixes">
-        {k.mode !== 'core' && (
-          <p className="nodata sim">
-            <b>Simulator: these readings are pretend.</b> The app is not connected to the Kinesis core, so it is not reading
-            the headset. Start the core (python -m kinesis.server --port ...) and this screen switches to the real sensors.
+        {!live && (
+          <p className="nodata">
+            <b>Not connected to the headset.</b> Start the Kinesis core in a terminal
+            (python -m kinesis.server --port ...), leave it running, then reload this page.
           </p>
         )}
         {k.mode === 'core' && k.streaming === false && (
@@ -75,13 +77,13 @@ export default function Fit() {
         <div>
           <h1 className="screen-title">Fit the headset</h1>
           <p className="screen-lede">
-            {warming ? `Turning on sensor ${total - off + 1} of ${total}.` : 'Each sensor is checked against live signal. Fix anything not green before calibrating.'}
+            {!live ? 'Each sensor appears here once the headset is connected.' : warming ? `Turning on sensor ${total - off + 1} of ${total}.` : 'Each sensor is checked against live signal. Fix anything not green before calibrating.'}
           </p>
         </div>
         <div className="fix-count">
-          {good} <small>of {total} reading well</small>
+          {live ? <>{good} <small>of {total} reading well</small></> : <small>No headset connected</small>}
         </div>
-        {issues.length > 0 ? (
+        {!live ? null : issues.length > 0 ? (
           <ul className="fix-list">
             {issues.map((c) => (
               <li key={c.ch} className={c.state}>
@@ -93,7 +95,7 @@ export default function Fit() {
             ))}
           </ul>
         ) : (
-          !warming && <p className="screen-lede">All sensors are reading well.</p>
+          live && !warming && <p className="screen-lede">All sensors are reading well.</p>
         )}
         <p className="hair-note">
           <b>Braids, locs, or coily hair:</b> seat each spike in a part line rather than on top of hair, and let the comfort pads rest on the braids to hold the frame. Paste only the sensors this screen flags.
