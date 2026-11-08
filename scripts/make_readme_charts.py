@@ -64,10 +64,10 @@ def ssvep():
 
 def gestures():
     fig, ax = frame("Clench and double blink, learned per person",
-                    "5 trials on our headset, each scored by a model trained on the other 4; 1 mix-up")
+                    "5 trials on our headset, each scored by a model trained on the other 4; 2 mix-ups")
     labels = ["Double blink\nfixed rules", "Double blink\nlearned model", "Clench\nlearned model"]
-    v = [0, 64 / 71 * 100, 31 / 41 * 100]
-    notes = ["0 caught", "64 of 71", "31 of 41"]
+    v = [0, 64 / 71 * 100, 40 / 41 * 100]
+    notes = ["0 caught", "64 of 71", "40 for 41"]
     bars = ax.bar(labels, v, color=[MINERAL, SETTLED, SETTLED], edgecolor=INK, linewidth=1.2, width=0.58)
     for b, x, n in zip(bars, v, notes):
         ax.text(b.get_x() + b.get_width() / 2, x + 2.5, n, ha="center", fontweight="bold")

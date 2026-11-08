@@ -19,7 +19,7 @@ Every input normalized to its own threshold, so 1.0 means "this would fire". The
 ```
 
 ### event
-A detector fired. `input` is one of `clench`, `blink2` (double blink), `alpha` (eyes closed 1 s), `look` (SSVEP, with `target` 0-3).
+A detector fired. `input` is one of `clench`, `clench2` (double clench: two clenches within 0.7 s), `blink2` (double blink), `alpha` (eyes closed 1 s, not used on our headset), `look` (SSVEP, with `target` 0-3). While a clench waits to see if a second follows, `levels` carries `"pending": true`.
 ```json
 {"type": "event", "input": "clench"}
 {"type": "event", "input": "look", "target": 2}
@@ -102,6 +102,7 @@ From the report agent, in answer to `report_request` or `action: report`. `file`
 - Hold **C**: clench rises, fires at threshold
 - Press **B** twice quickly: double blink
 - Hold **E**: eyes closed, alpha rises
+- **D**: double clench
 - **1 2 3 4**: look at tile
 - **X**: replay a recorded seizure
 - **?**: show these keys on screen

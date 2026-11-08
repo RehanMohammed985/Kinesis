@@ -41,8 +41,8 @@ Every number here comes from a script in this repo, so anyone can rerun it.
 
 - **Leave one trial out:**
   - double blink: 64 of 71 caught
-  - clench: 31 of 41 caught
-  - 1 mix-up between the two
+  - clench: 40 events for 41 bursts (31 before clench re-armed on release)
+  - 2 mix-ups between the two
   - 2 false events in 145 s still
 - **Fixed rules, for comparison:** caught 0 double blinks.
 - Details are in kinesis/data/gestures/README.md.

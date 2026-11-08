@@ -590,3 +590,12 @@ button { font: inherit; color: inherit; }
 .pill.warn .bars i { background: var(--alarm); }
 .nodata.sim { background: #fbf0c8; box-shadow: inset 0 0 0 2px var(--signal-deep); }
 .nodata.sim b { color: var(--ink); }
+
+/* paced calibration */
+.cal-count { margin: 0; font-size: var(--t-s); font-weight: 700; color: var(--ink-soft); }
+.cal-main.phase-now .cal-cue { color: var(--ink); }
+.cal-main.phase-now .cal-bar > i { background: var(--signal-deep); }
+.cal-main.phase-ready .cal-cue, .cal-main.phase-relax .cal-cue { color: var(--ink-soft); }
+.cal-meter i.live { box-shadow: inset 0 0 0 3px var(--ink); }
+.cal-meter i.hit { background: var(--settled); }
+.cal-meter i.miss { background: var(--mineral-deep); box-shadow: none; }

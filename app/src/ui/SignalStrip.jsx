@@ -4,10 +4,11 @@ import { useKinesis } from '../engine/kinesis.jsx'
 
 // Live traces for each input, with the threshold line. The lane for the
 // input that chooses is outlined; a lane flashes yellow when it fires.
+// Double clench is two clenches, so its lane draws the clench signal.
 const LANES = [
   { key: 'clench', input: 'clench' },
   { key: 'blink', input: 'blink2' },
-  { key: 'alpha', input: 'alpha' },
+  { key: 'clench2', input: 'clench2', src: 'clench' },
 ]
 const MAX = 1.5
 
@@ -24,7 +25,7 @@ export default function SignalStrip() {
   useEffect(() => {
     let raf
     const draw = (now) => {
-      for (const { key } of LANES) {
+      for (const { key, src } of LANES) {
         const c = canvases.current[key]
         const lane = lanes.current[key]
         if (!c || !lane) continue
@@ -35,7 +36,7 @@ export default function SignalStrip() {
         const g = c.getContext('2d')
         g.setTransform(dpr, 0, 0, dpr, 0, 0)
         g.clearRect(0, 0, w, h)
-        const hist = k.historyRef.current[key]
+        const hist = k.historyRef.current[src || key]
         const head = k.headRef.current
         const n = hist.length
         const y = (v) => h - 3 - (Math.min(v, MAX) / MAX) * (h - 6)

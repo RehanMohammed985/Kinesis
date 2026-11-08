@@ -170,6 +170,7 @@ export const SENSORS = [
 export const INPUTS = {
   clench: { name: 'Clench', how: 'Clench your jaw' },
   blink2: { name: 'Double blink', how: 'Blink twice' },
+  clench2: { name: 'Double clench', how: 'Clench twice, quickly' },
   alpha: { name: 'Eyes closed', how: 'Close your eyes for a second' },
   look: { name: 'Look', how: 'Look at a flashing square' },
 }

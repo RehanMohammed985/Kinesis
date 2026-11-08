@@ -44,6 +44,7 @@ export default function Rail({ onSetup }) {
       )}
       <span className="pill keys-hint">
         <b>{INPUTS[k.profile.select].name}</b> chooses{back ? <>, <b>{back.name.toLowerCase()}</b> goes back</> : null}
+        {INPUTS[k.profile.rest] ? <>, <b>{INPUTS[k.profile.rest].name.toLowerCase()}</b> pauses</> : null}
       </span>
       {k.spokenScan && <span className="pill"><b>Spoken scanning</b></span>}
       <button className="rail-link" onClick={onSetup}>Setup</button>

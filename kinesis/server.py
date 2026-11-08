@@ -122,7 +122,26 @@ async def main():
             elif ts[-1] - inj["start"] > len(demo) / FS:
                 state["inject"] = None
         return eeg, ts
-    profile = {"select": "clench", "back": "blink2", "rest": "alpha"}
+    profile = {"select": "clench", "back": "blink2", "rest": "clench2"}
+    # Two clenches within DOUBLE_S are a double clench. A single clench is
+    # held back that long to be sure; the app holds its frame still meanwhile.
+    DOUBLE_S = 0.7
+    pend = {"t": None}
+
+    def pair_clenches(evs, now):
+        out = []
+        for e in evs:
+            if e["input"] != "clench":
+                out.append(e)
+            elif pend["t"] is not None and now - pend["t"] <= DOUBLE_S:
+                out.append({"type": "event", "input": "clench2"})
+                pend["t"] = None
+            else:
+                pend["t"] = now
+        if pend["t"] is not None and now - pend["t"] > DOUBLE_S:
+            out.append({"type": "event", "input": "clench"})
+            pend["t"] = None
+        return out
     print("Sit still with eyes open for 5 s to set the baseline...")
 
     async def handler(ws):
@@ -174,6 +193,7 @@ async def main():
             await broadcast({"type": "calibration", "step": "model", "ok": False, **info})
             return
         model.save(PERSONAL_MODEL)
+        cal["c"] = None  # trained; a second "done" does not retrain
         gest["det"] = gl.LearnedDetectors(model, det)
         gest["source"] = str(PERSONAL_MODEL)
         print("Gestures: learned this person's clench and double blink", info)
@@ -233,8 +253,11 @@ async def main():
                 # calibration: count attempts for the app, keep frames to learn from
                 events = []
                 f = gl.raw_features(eeg[:, -WIN:], cal["c"].model.chans)
-                if cal["c"].add(f, cal["step"]):
+                if cal["c"].add(f, cal["step"], now):
                     events = [{"type": "event", "input": cal["step"]}]
+            else:
+                events = pair_clenches(events, now)
+            levels["pending"] = pend["t"] is not None
             if args.synthetic:
                 events = []  # synthetic data is meaningless for switches
             look_events = []

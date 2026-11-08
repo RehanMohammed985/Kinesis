@@ -33,7 +33,7 @@ const SIM_READINGS = {
 export function KinesisProvider({ children }) {
   const [mode, setMode] = useState('sim') // 'core' | 'sim'
   const [streaming, setStreaming] = useState(null) // core only: is the headset sending data
-  const [profile, setProfile] = useState({ select: 'clench', back: 'blink2', rest: 'alpha' })
+  const [profile, setProfile] = useState({ select: 'clench', back: 'blink2', rest: 'clench2' })
   const [quality, setQuality] = useState(initialQuality)
   const [toast, setToast] = useState(null)
   const [spokenScan, setSpokenScan] = useState(false)
@@ -147,6 +147,7 @@ export function KinesisProvider({ children }) {
       if (k === 'x') { demoRef.current?.(); return }
       if (modeRef.current !== 'sim') return
       if (k === 'c' || k === 'e') held.add(k)
+      if (k === 'd') { levelsRef.current.clench = 1.3; emit({ type: 'event', input: 'clench2' }) }
       if (k === 'b') {
         const now = performance.now()
         levelsRef.current.blink = 1.25

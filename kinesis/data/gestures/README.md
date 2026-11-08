@@ -24,11 +24,11 @@ The learned model (kinesis/signal/learned.py) uses shrinkage LDA on log-power fe
 | | 1 | 2 | 3 | 4 | 5 | total |
 |---|---|---|---|---|---|---|
 | double blinks caught (bursts seen offline) | 14 (14) | 9 (17) | 14 (15) | 13 (13) | 14 (12) | 64 (71) |
-| clenches caught (bursts seen offline) | 9 (10) | 6 (8) | 6 (9) | 5 (8) | 5 (6) | 31 (41) |
-| mix-ups | 0 | 0 | 0 | 1 | 0 | 1 |
+| clench events (bursts seen offline) | 14 (10) | 6 (8) | 9 (9) | 5 (8) | 6 (6) | 40 (41) |
+| mix-ups | 0 | 0 | 1 | 1 | 0 | 2 |
 | false events while still | 2 in 23 s | 0 in 30 s | 0 in 30 s | 0 in 32 s | 0 in 31 s | 2 in 145 s |
 
-The clench count runs low on purpose: a clench re-arms only after the person relaxes, so a held clench never selects twice.
+A clench re-arms once the jaw lets go (activity under 25% of its peak), so quick repeated clenches each count; two within 0.7 s are read as a double clench. Before this change clench re-armed only at full rest and caught 31 of 41. Trial 1 shows a few extra events (14 for 10 bursts) where clenches wobbled.
 
 **In-app calibration** (still, 5 clenches, 5 double blinks) pools the person's attempts, weighted 3x, with these recordings. Calibrating on one trial and testing on another:
 - pooled never did worse than calibration alone

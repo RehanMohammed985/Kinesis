@@ -26,6 +26,8 @@ export default function Board({ items, layout, help = true, onHelp, onBack, star
   const cellRefs = useRef({})
   const startRef = useRef(performance.now())
   const busyRef = useRef(false)
+  const holdRef = useRef(0)
+  const lastRef = useRef(0)
   const state = useRef({})
   state.current = { index, paused, all, onBack, profile: k.profile }
 
@@ -74,6 +76,13 @@ export default function Board({ items, layout, help = true, onHelp, onBack, star
     let raf
     const tick = (now) => {
       const { paused: p, all: items } = state.current
+      // Hold the frame still while the person is clenching and while the core
+      // waits to see whether a second clench follows, so the choice lands on
+      // the tile they meant.
+      const L = k.levelsRef.current
+      if ((L[LEVEL_KEY[state.current.profile.select]] || 0) >= 0.6 || L.pending) holdRef.current = now + 900
+      if (now < holdRef.current && !p && !busyRef.current) startRef.current = Math.min(startRef.current + (now - (lastRef.current || now)), now)
+      lastRef.current = now
       const progress = p || busyRef.current ? 0 : (now - startRef.current) / dwell
       if (progress >= 1) {
         startRef.current = now

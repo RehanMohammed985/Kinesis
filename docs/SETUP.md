@@ -188,12 +188,14 @@ The dev server also forwards `/core` to the core. Any device that opens this pag
 - **Pass:** at least 5 of 6 good.
 - If one is flagged, follow its prompt: wiggle it through the hair, or press it down a quarter turn. POz (pin 5) has been the weakest on our headset.
 
-**Calibrate.** About one minute:
+**Calibrate.** About one and a half minutes. The app paces every attempt: **Get ready**, then **Clench now** (or **Blink twice now**), then **Relax**. Only an attempt inside the "now" window counts, and each counts once.
 
 1. Stay still for 6 s.
-2. Clench 5 times, a breath apart.
-3. Double blink 5 times, about 2 s apart.
-4. Eyes closed: tap **Skip this step**. It does not show reliably on our current fit.
+2. Clench, 5 cued attempts.
+3. Double blink, 5 cued attempts.
+4. Double clench, 3 cued attempts. This one checks the model Kinesis just learned.
+
+The three inputs: **clench chooses, double blink goes back, double clench pauses or resumes.**
 
 **Check:** the core prints `Gestures: learned this person's clench and double blink` and saves the model to `data/gesture_model.json`. If it prints `not enough clean attempts`, run Calibrate again and make each attempt firmer.
 
@@ -260,7 +262,7 @@ On Windows PowerShell, set variables with `$env:KINESIS_LIVE="1"` and so on, the
   |---|---|
   | hold C | clench |
   | B B | double blink |
-  | hold E | eyes closed |
+  | D | double clench |
   | 1 to 4 | look at a tile |
   | I | incoming call from Linda |
   | L | Look screen |

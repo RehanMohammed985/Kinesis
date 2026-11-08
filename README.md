@@ -38,7 +38,7 @@ Kinesis gives people who cannot move or speak a way to talk in their own voice, 
 
 ## What it does
 
-A person wears a light headset with six dry electrodes. A yellow frame steps through the choices on screen. A jaw clench chooses, a double blink goes back, and looking at a flashing square picks it directly. Three things a day runs on are one or two choices away:
+A person wears a light headset with six dry electrodes. A yellow frame steps through the choices on screen. A jaw clench chooses, a double blink goes back, a double clench pauses, and looking at a flashing square picks it directly. Three things a day runs on are one or two choices away:
 
 | | Moment | What happens |
 |---|---|---|
@@ -91,6 +91,7 @@ flowchart LR
 flowchart LR
     F["Yellow frame steps through<br/>the choices, 1.8 s each"] -->|clench| C[Choose it]
     F -->|double blink| K[Go back]
+    F -->|double clench| PZ[Pause or resume]
     F -->|look at a flashing square| D[Pick it directly]
     C --> SAY["Say it<br/>spoken in his voice"]
     C --> DO["Get it done<br/>plan, confirm, run"]
@@ -102,7 +103,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    R["Sit still 5 s<br/>rest baseline"] --> Q["5 clenches, 5 double blinks<br/>cued by the app"]
+    R["Sit still 5 s<br/>rest baseline"] --> Q["5 clenches, 5 double blinks<br/>each attempt paced by the app"]
     Q --> FE["Every 50 ms: muscle and slow power,<br/>per channel and shared, vs rest"]
     FE --> L["Shrinkage LDA<br/>pooled with our recordings"]
     L --> E["Events<br/>held 0.2 s, re-armed on release"]
@@ -141,9 +142,9 @@ flowchart LR
   - The person's frames are weighted 3 times and pooled with our five labelled trials whenever they share 3 or more channels.
   - Training takes under a second. Pooling never did worse than calibration alone, and it rescued the sessions where calibration alone broke.
 - **Events.** The top gesture must reach probability 0.8, with activity at least 2 times rest, held for 0.2 s.
-  - Clench re-arms only after rest, so a held clench never selects twice.
   - Double blink also re-arms when activity falls below 45% of its peak, because people do them back to back.
-  - Refractory periods: 0.8 s for clench, 0.7 s for double blink.
+  - A clench re-arms once the jaw lets go (activity under 25% of its peak). Two clenches within 0.7 s are a **double clench**; a single clench is held back 0.7 s to be sure, and the app holds its frame still meanwhile so the choice lands where the person meant.
+  - Refractory periods: 0.35 s for clench, 0.7 s for double blink.
 
 Code: `kinesis/signal/learned.py`, trained and tested with `scripts/train_gestures.py`.
 
@@ -246,8 +247,8 @@ Every number comes from a script in this repo. Full write-up: [docs/VALIDATION.m
 |---|---|---|
 | Look to choose | **Public:** Tsinghua SSVEP benchmark, 35 people, 4 targets, our 4 channels at 125 Hz | 95.0% at 2 s (87.5% at 1 s, 97.5% at 3 s). Live decoder: first choice right 93.1%, wrong 0.2%, median 2.2 s |
 | False looks | **Baseline:** our headset, 100 s with nothing flashing | 1 false choice |
-| Double blink | **Baseline:** our headset, 5 trials, each scored by a model trained on the other 4 | 64 of 71 caught, none read as a clench. Fixed rules caught 0 |
-| Clench | Same | 31 of 41 caught, 1 read as a double blink. 2 false events in 145 s still |
+| Double blink | **Baseline:** our headset, 5 trials, each scored by a model trained on the other 4 | 64 of 71 caught, 1 read as a clench. Fixed rules caught 0 |
+| Clench | Same | 40 events for 41 bursts, 1 read as a double blink. 2 false events in 145 s still |
 | Seizure-like | **Public:** Bonn epilepsy dataset, 500 labeled recordings | 94% of seizure recordings flagged, 3% of non-seizure (same patients); 75% and 0% against healthy scalp recordings |
 | Imagined words | **Public:** 2020 BCI Competition track 3, 15 people | 41.5% on 5 words with 64 channels (chance 20%, all 15 above chance); 26.0% with our 6 electrodes |
 | Imagined yes/no | **Baseline:** our headset, 18 trials | No difference between words (chance) |

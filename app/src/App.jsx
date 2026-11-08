@@ -76,6 +76,7 @@ function Keys() {
     <div className="keys" role="dialog" aria-label="Simulator keys">
       <kbd>C</kbd><span>Hold to clench</span>
       <kbd>B B</kbd><span>Double blink</span>
+      <kbd>D</kbd><span>Double clench</span>
       <kbd>E</kbd><span>Hold to close eyes</span>
       <kbd>1 to 4</kbd><span>Look at a tile</span>
       <kbd>I</kbd><span>Incoming call from Linda</span>
