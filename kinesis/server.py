@@ -42,9 +42,23 @@ async def broadcast(msg):
     await asyncio.gather(*(c.send(data) for c in list(clients)), return_exceptions=True)
 
 
+def find_port():
+    """The first USB serial port: /dev/cu.usb* on a Mac, ttyACM/ttyUSB on Linux, COM on Windows."""
+    import glob
+    found = sorted(glob.glob("/dev/cu.usbmodem*") + glob.glob("/dev/cu.usbserial*") + glob.glob("/dev/cu.usb*")
+                   + glob.glob("/dev/ttyACM*") + glob.glob("/dev/ttyUSB*"))
+    if not found:
+        try:
+            from serial.tools import list_ports
+            found = [p.device for p in list_ports.comports() if "Bluetooth" not in p.device]
+        except ImportError:
+            pass
+    return found[0] if found else None
+
+
 async def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--port")
+    ap.add_argument("--port", help="serial port; leave out to find the headset automatically")
     ap.add_argument("--synthetic", action="store_true")
     # 0.0.0.0 so the app can run on a different laptop on the same wifi:
     # open http://<app-laptop>:5173/?core=ws://<this-laptop-ip>:8765
@@ -54,7 +68,10 @@ async def main():
     ap.add_argument("--rules", action="store_true", help="fixed rules only, no learned gestures")
     args = ap.parse_args()
     if not args.synthetic and not args.port:
-        ap.error("--port or --synthetic required")
+        args.port = find_port()
+        if not args.port:
+            ap.error("no headset found on USB. Check the cable (some only charge), or pass --port")
+        print(f"Headset port: {args.port}")
 
     board = Knight(port=args.port, synthetic=args.synthetic)
     print("Turning on channels (about 30 s on the real board)...")
