@@ -42,7 +42,7 @@ Real time, no speed-up. Each cue waits until he does it, shows green for 0.7 s, 
 | 0:12 | A then B: Home. The yellow frame rests on **Say it**. Walter clenches. | "Walter had a stroke. He cannot speak or use his right hand." |
 | 0:20 | B: Say it screen. The frame starts on **I need water**. Walter clenches. | "One clench opens Say it. One more..." |
 | 0:24 | A: his voice says "I need water". B: the phrase shows large. Hold 3 s. | (let the voice play, no words) |
-| 0:30 | | "...and he says it in his own voice, cloned with ElevenLabs." |
+| 0:30 | | "...and he says it out loud, in an ElevenLabs voice. Clone it from a few minutes of old videos or voicemails, and it is his own voice again." |
 
 ### 0:40 to 1:15, scenario 2: reach Linda
 
