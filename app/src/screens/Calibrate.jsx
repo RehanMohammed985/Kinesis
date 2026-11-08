@@ -16,14 +16,16 @@ const FULL = [
 ]
 const FULL_MS = { ready: 1400, now: 2200, relax: 1600 }
 
-// Quick check, about 12 s, for someone already calibrated: a short rest for
+// Quick check, about 10 s, for someone already calibrated: a short rest for
 // the baseline, then one clench and one double blink to confirm it works.
+// Once an attempt is caught it shows green for a moment, then moves on.
 const QUICK = [
-  { id: 'rest', label: 'Stay still', cue: 'Stay still', hint: 'Setting the quiet level.', seconds: 4 },
+  { id: 'rest', label: 'Stay still', cue: 'Stay still', hint: 'Setting the quiet level.', seconds: 3.5 },
   { id: 'clench', label: 'Clench', input: 'clench', reps: 1, now: 'Clench now', hint: 'One firm clench.' },
   { id: 'blink2', label: 'Double blink', input: 'blink2', reps: 1, now: 'Blink twice now', hint: 'Two quick blinks.' },
 ]
-const QUICK_MS = { ready: 800, now: 2600, relax: 700 }
+const QUICK_MS = { ready: 800, now: 2600, relax: 600 }
+const CAUGHT_MS = 700 // quick check: hold the green this long after a catch
 const PROFILE = { select: 'clench', back: 'blink2', rest: 'clench2' }
 
 function tone(freq = 660) {
@@ -72,10 +74,9 @@ export default function Calibrate({ quick = false }) {
     if (!current || done) return
     let id
     const ms = current.seconds ? current.seconds * 1000 : PHASE_MS[phase]
-    const startedAt = phaseStart.current
     const frame = () => {
       tick((n) => n + 1)
-      if (performance.now() - startedAt < ms) { id = requestAnimationFrame(frame); return }
+      if (performance.now() - phaseStart.current < ms) { id = requestAnimationFrame(frame); return }
       phaseStart.current = performance.now()
       if (current.seconds) { next(); return }
       if (phase === 'ready') { hitThisRep.current = false; setPhase('now'); tone(700) }
@@ -103,6 +104,7 @@ export default function Calibrate({ quick = false }) {
         if (phase !== 'now' || hitThisRep.current) return
         hitThisRep.current = true
         tone(990)
+        if (quick) phaseStart.current = Math.min(phaseStart.current, performance.now() + CAUGHT_MS - PHASE_MS.now)
         setHits((h) => {
           const row = [...(h[cur.id] || [])]
           row[rep] = true
@@ -118,7 +120,7 @@ export default function Calibrate({ quick = false }) {
       k.send({ type: 'calibrate', step: 'done', quick })
       k.setProfile(PROFILE)
       setDone(true)
-      if (quick) setTimeout(() => go('home'), 2600)
+      if (quick) setTimeout(() => go('home'), 2200)
     }
   }
 

@@ -199,7 +199,7 @@ The three inputs: **clench chooses, double blink goes back, double clench pauses
 
 **Check:** the core prints `Gestures: learned this person's clench and double blink` and saves the model to `data/gesture_model.json`. If it prints `not enough clean attempts`, run Calibrate again and make each attempt firmer.
 
-**Quick check, 12 s.** On Fit, after a full calibration. A 4 s rest resets the quiet level, then one clench and one double blink confirm it works. It keeps the learned model. Use it each time the headset goes back on, and for the onboarding shot in the video.
+**Quick check, about 10 s.** On Fit, after a full calibration. A 3.5 s rest resets the quiet level, then one clench and one double blink confirm it works. Each attempt shows green for a moment once it is caught, then the next cue comes. It keeps the learned model. Use it each time the headset goes back on, and for the onboarding shot in the video.
 
 ## 9. Live test
 

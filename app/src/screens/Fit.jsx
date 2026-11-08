@@ -104,7 +104,7 @@ export default function Fit() {
           <button className="btn" disabled={warming} onClick={() => go('calibrate')}>
             {issues.some((i) => i.state === 'bad') ? 'Calibrate anyway' : 'Start calibration'}
           </button>
-          <button className="btn ghost" onClick={() => go('calibrate', { quick: true })}>Quick check, 12 s</button>
+          <button className="btn ghost" onClick={() => go('calibrate', { quick: true })}>Quick check, 10 s</button>
           <button className="btn ghost" onClick={() => go('home')}>Skip to home</button>
         </div>
       </div>

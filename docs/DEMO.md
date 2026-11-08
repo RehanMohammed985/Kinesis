@@ -27,9 +27,13 @@ Cut between A and B. Use C only for the moments in scenarios 2 and 3.
 
 | Time | Picture | Words (voice-over) |
 |---|---|---|
-| 0:00 | A: the operator puts the headset on Walter and clips the ear clip | "Kinesis is a $350 headset and an app." |
-| 0:04 | B: Fit screen, sensors turn green, then the operator taps **Quick check, 12 s** | "Setup takes five minutes once. After that, a twelve-second check." |
-| 0:06 | B: Stay still, then **Clench now** (it turns green), then **Blink twice now** (green), then **Ready.** | (play this part at 1.5x if needed) |
+| 0:00 | A: the operator slides the headset on Walter and clips the ear clip. One 2 s shot. | "Kinesis is a $350 headset and an app." |
+| 0:02 | B: Fit screen, sensors green. The operator taps **Quick check, 10 s**. | "Setup takes five minutes, once. After that, a ten-second check." |
+| 0:03 | B: **Stay still** (3.5 s), then **Get ready**, **Clench now**. Walter clenches, the dot turns green and a tone plays. | |
+| 0:07 | B: **Get ready**, **Blink twice now**. Walter double blinks, green, tone. | |
+| 0:10 | B: **Ready.** Then Home on its own. | "That's it. He's in." |
+
+Real time, no speed-up. Each cue waits until he does it, shows green for 0.7 s, then a short pause before the next one, so nothing looks rushed. If he misses a cue, it waits up to 2.6 s and moves on anyway: cut that take and redo it.
 
 ### 0:12 to 0:40, scenario 1: say it
 
@@ -59,7 +63,7 @@ Cut between A and B. Use C only for the moments in scenarios 2 and 3.
 
 ### 1:50 to 2:00, close
 
-B: Home. End card: **Kinesis. Run your day with your mind.** Then: $350 headset, 12-second check, 95% look-to-choose on the 35-person SSVEP benchmark.
+B: Home. End card: **Kinesis. Run your day with your mind.** Then: $350 headset, 10-second check, 95% look-to-choose on the 35-person SSVEP benchmark.
 
 ## How the app is paced for video
 
