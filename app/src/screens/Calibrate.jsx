@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNav } from '../App.jsx'
 import { INPUTS } from '../data.js'
 import { useKinesis } from '../engine/kinesis.jsx'
+import { tone } from '../engine/tone.js'
 
 // Calibration at a steady pace. Each attempt is cued: get ready, do it now,
 // relax. Only an input seen inside the "now" window counts, so one long
@@ -28,22 +29,7 @@ const QUICK_MS = { ready: 800, now: 2600, relax: 600 }
 const CAUGHT_MS = 700 // quick check: hold the green this long after a catch
 const PROFILE = { select: 'clench', back: 'blink2', rest: 'clench2' }
 
-function tone(freq = 660) {
-  try {
-    const ctx = new AudioContext()
-    const o = ctx.createOscillator()
-    const g = ctx.createGain()
-    o.frequency.value = freq
-    g.gain.setValueAtTime(0.0001, ctx.currentTime)
-    g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.02)
-    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.35)
-    o.connect(g).connect(ctx.destination)
-    o.start()
-    o.stop(ctx.currentTime + 0.4)
-  } catch { /* no audio */ }
-}
-
-export default function Calibrate({ quick = false }) {
+export default function Calibrate({ quick = false, scripted = false }) {
   const STEPS = quick ? QUICK : FULL
   const PHASE_MS = quick ? QUICK_MS : FULL_MS
   const k = useKinesis()
@@ -93,6 +79,13 @@ export default function Calibrate({ quick = false }) {
     id = requestAnimationFrame(frame)
     return () => cancelAnimationFrame(id)
   }, [step, rep, phase, done]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // scene mode: the input happens on its own about 1 s after the cue
+  useEffect(() => {
+    if (!scripted || phase !== 'now' || !current?.input) return
+    const t = setTimeout(() => k.perform(current.input), current.input === 'clench' ? 600 : 780)
+    return () => clearTimeout(t)
+  }, [phase, step, rep]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // count an input only inside the "now" window, once per attempt
   useEffect(

@@ -32,11 +32,18 @@ export default function Rail({ onSetup }) {
         <small>{t.day}, {t.time}</small>
       </span>
       <span className="rail-spacer" />
-      <span className={`pill ${k.mode !== 'core' ? 'sim' : k.streaming === false ? 'warn' : 'live'}`}>
-        <span className="bars" aria-hidden="true"><i /><i /><i /></span>
-        {k.mode !== 'core' ? 'Simulator' : k.streaming === false ? 'No data from headset' : k.streaming ? 'Headset on' : 'Connecting'}
-      </span>
-      {k.mode === 'core' && k.streaming && on.length > 0 && (
+      {k.scene ? (
+        <span className={`pill ${k.plug?.plugged ? 'live' : 'warn'}`}>
+          <span className="bars" aria-hidden="true"><i /><i /><i /></span>
+          {k.plug?.plugged ? 'Headset on' : 'No headset'}
+        </span>
+      ) : (
+        <span className={`pill ${k.mode !== 'core' ? 'sim' : k.streaming === false ? 'warn' : 'live'}`}>
+          <span className="bars" aria-hidden="true"><i /><i /><i /></span>
+          {k.mode !== 'core' ? 'Simulator' : k.streaming === false ? 'No data from headset' : k.streaming ? 'Headset on' : 'Connecting'}
+        </span>
+      )}
+      {((k.mode === 'core' && k.streaming) || (k.scene && k.plug?.plugged)) && on.length > 0 && (
         <span className={`pill ${anyBad ? 'warn' : ''}`}>
           <span className={`dot ${anyBad ? 'bad' : 'on'}`} />
           {good} of {k.quality.length} sensors

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -48,6 +48,23 @@ function kinesisServer(env) {
       writeFileSync(file, Buffer.from(await new Response(audio).arrayBuffer()))
     }
     return file
+  }
+
+  // Scene mode: report when the headset's USB serial port appears or goes away.
+  const PORT_RE = new RegExp(env.KINESIS_PLUG_MATCH || '^(cu\\.usbserial|cu\\.usbmodem|cu\\.wchusbserial|cu\\.SLAB|ttyUSB|ttyACM)')
+  const plugNow = () => {
+    let ports = []
+    try { ports = readdirSync('/dev').filter((n) => PORT_RE.test(n)) } catch { /* no /dev */ }
+    return { plugged: ports.length > 0, port: ports[0] ? `/dev/${ports[0]}` : null }
+  }
+  const plugListeners = new Set()
+  let plugState = plugNow()
+  let plugTimer = null
+  const plugPoll = () => {
+    const next = plugNow()
+    if (next.plugged === plugState.plugged) return
+    plugState = next
+    for (const l of plugListeners) l.write(`data: ${JSON.stringify(plugState)}\n\n`)
   }
 
   const json = (res, code, body) => {
@@ -145,6 +162,21 @@ function kinesisServer(env) {
           res.write(': connected\n\n')
           listeners.add(res)
           req.on('close', () => listeners.delete(res))
+          return
+        }
+
+        if (req.url === '/api/plug/stream') {
+          res.setHeader('Content-Type', 'text/event-stream')
+          res.setHeader('Cache-Control', 'no-cache')
+          res.setHeader('Connection', 'keep-alive')
+          plugState = plugNow()
+          res.write(`data: ${JSON.stringify(plugState)}\n\n`)
+          plugListeners.add(res)
+          if (!plugTimer) plugTimer = setInterval(plugPoll, 250)
+          req.on('close', () => {
+            plugListeners.delete(res)
+            if (!plugListeners.size) { clearInterval(plugTimer); plugTimer = null }
+          })
           return
         }
 

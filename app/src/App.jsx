@@ -16,15 +16,16 @@ import Report from './screens/Report.jsx'
 import Look from './screens/Look.jsx'
 import Say from './screens/Say.jsx'
 import Contact from './screens/Contact.jsx'
+import Connect from './screens/Connect.jsx'
 
 const Nav = createContext(null)
 export const useNav = () => useContext(Nav)
 
-const SCREENS = { fit: Fit, calibrate: Calibrate, home: Home, talk: Talk, call: Call, calling: Calling, tasks: Tasks, plan: Plan, media: Media, help: Help, report: Report, look: Look, say: Say, contact: Contact }
+const SCREENS = { fit: Fit, calibrate: Calibrate, home: Home, talk: Talk, call: Call, calling: Calling, tasks: Tasks, plan: Plan, media: Media, help: Help, report: Report, look: Look, say: Say, contact: Contact, connect: Connect }
 
 export default function App() {
   const k = useKinesis()
-  const first = new URLSearchParams(location.search).get('start') || 'fit'
+  const first = k.scene === '1' ? 'connect' : new URLSearchParams(location.search).get('start') || 'fit'
   const [route, setRoute] = useState({ name: SCREENS[first] ? first : 'fit', params: {}, n: 0 })
   const go = useCallback((name, params = {}) => setRoute((r) => ({ name, params, n: r.n + 1 })), [])
 

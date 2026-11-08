@@ -601,3 +601,8 @@ button { font: inherit; color: inherit; }
   align-self: flex-start; margin-top: 6px; border: 0; border-radius: 999px; padding: 8px 14px;
   background: var(--ink); color: var(--paper); font-weight: 700; font-size: var(--t-xs); cursor: pointer;
 }
+
+/* scene mode: sensors waiting for the cable */
+.head.waiting .node circle { opacity: 0.55; }
+.rail-hello { flex-shrink: 0; white-space: nowrap; }
+@media (max-width: 1279px) { .rail .keys-hint { display: none; } }

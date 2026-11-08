@@ -21,6 +21,12 @@ const coreUrl = () =>
   new URLSearchParams(location.search).get('core') ||
   `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/core`
 
+// ?scene=1 runs the scripted demo: no core, no real detection. The dev server
+// only reports when the headset's USB cable goes in (/api/plug/stream).
+const PARAMS = new URLSearchParams(location.search)
+export const SCENE = PARAMS.get('scene')
+const NO_CORE = Boolean(SCENE) || PARAMS.get('sim') === '1'
+
 const initialQuality = () =>
   SENSORS.map((s) => ({ ch: s.ch, site: s.site, state: 'off', reason: 'off' }))
 
@@ -49,6 +55,20 @@ export function KinesisProvider({ children }) {
   const modeRef = useRef(mode)
   modeRef.current = mode
   const demoRef = useRef(null)
+  const performRef = useRef(() => {})
+  const [plug, setPlug] = useState(null) // scene mode: { plugged, port, manual }
+  const liveRef = useRef(!SCENE) // scene mode: flat lines until the cable goes in
+  liveRef.current = !SCENE || Boolean(plug?.plugged)
+
+  useEffect(() => {
+    if (!SCENE) return
+    const es = new EventSource('/api/plug/stream')
+    es.onmessage = (e) => { try { setPlug(JSON.parse(e.data)) } catch { /* ignore */ } }
+    const key = (e) => { if (e.key.toLowerCase() === 'p') setPlug({ plugged: true, manual: true }) }
+    window.addEventListener('keydown', key)
+    return () => { es.close(); window.removeEventListener('keydown', key) }
+  }, [])
+  const perform = useCallback((input) => performRef.current(input), [])
 
   const emit = useCallback((msg) => {
     if (msg.type === 'event') firedRef.current[LEVEL_KEY[msg.input] || msg.input] = performance.now()
@@ -80,6 +100,7 @@ export function KinesisProvider({ children }) {
   useEffect(() => {
     let stopped = false
     let retry
+    if (NO_CORE) return
     const connect = () => {
       let ws
       try { ws = new WebSocket(coreUrl()) } catch { retry = setTimeout(connect, 3000); return }
@@ -138,6 +159,24 @@ export function KinesisProvider({ children }) {
     let clenchArmed = true
     let alphaSince = 0
     let alphaFired = false
+    let clenchUntil = 0
+    let quietUntil = 0
+
+    // scripted inputs for scene mode, drawn on the signal strip like the real thing
+    performRef.current = (input) => {
+      const now = performance.now()
+      if (input === 'clench') clenchUntil = now + 550
+      if (input === 'blink2') {
+        levelsRef.current.blink = 1.25
+        setTimeout(() => { levelsRef.current.blink = 1.25; emit({ type: 'event', input: 'blink2' }) }, 220)
+      }
+      if (input === 'clench2') {
+        quietUntil = now + 1300
+        clenchUntil = now + 250
+        setTimeout(() => { clenchUntil = performance.now() + 250 }, 450)
+        setTimeout(() => emit({ type: 'event', input: 'clench2' }), 750)
+      }
+    }
 
     const down = (e) => {
       if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return
@@ -147,7 +186,7 @@ export function KinesisProvider({ children }) {
       if (k === 'x') { demoRef.current?.(); return }
       if (modeRef.current !== 'sim') return
       if (k === 'c' || k === 'e') held.add(k)
-      if (k === 'd') { levelsRef.current.clench = 1.3; emit({ type: 'event', input: 'clench2' }) }
+      if (k === 'd') { performRef.current('clench2'); return }
       if (k === 'b') {
         const now = performance.now()
         levelsRef.current.blink = 1.25
@@ -175,12 +214,13 @@ export function KinesisProvider({ children }) {
       last = now
       const L = levelsRef.current
       if (modeRef.current === 'sim') {
-        const n = () => (Math.random() - 0.5) * 0.06
+        const n = () => (liveRef.current ? (Math.random() - 0.5) * 0.06 : 0)
         const ease = (v, target, rate) => v + (target - v) * (1 - Math.exp(-dt / rate))
-        L.clench = Math.max(0, ease(L.clench, held.has('c') ? 1.35 : 0.06, held.has('c') ? 260 : 120) + n())
+        const clenching = held.has('c') || now < clenchUntil
+        L.clench = Math.max(0, ease(L.clench, clenching ? 1.35 : 0.06, clenching ? 260 : 120) + n())
         L.blink = Math.max(0, ease(L.blink, 0.04, 70) + n() * 0.5)
         L.alpha = Math.max(0, ease(L.alpha, held.has('e') ? 1.45 : 0.3, 380) + n())
-        if (L.clench >= 1 && clenchArmed) {
+        if (L.clench >= 1 && clenchArmed && now > quietUntil) {
           clenchArmed = false
           emit({ type: 'event', input: 'clench' })
         }
@@ -218,7 +258,7 @@ export function KinesisProvider({ children }) {
 
   // ---------- sensors ----------
   // Mirrors the Knight's enable sequence: channels come on one at a time.
-  const powerOn = useCallback(() => {
+  const powerOn = useCallback(({ allGood = false, stepMs = 650 } = {}) => {
     if (modeRef.current === 'core') {
       send({ type: 'fit', action: 'start' })
       return
@@ -228,12 +268,12 @@ export function KinesisProvider({ children }) {
       setTimeout(() => {
         setQuality((q) =>
           q.map((c) =>
-            c.ch === s.ch ? { ...c, ...(SIM_READINGS[s.ch] || { state: 'good', reason: 'ok' }), justOn: true } : { ...c, justOn: false },
+            c.ch === s.ch ? { ...c, ...((!allGood && SIM_READINGS[s.ch]) || { state: 'good', reason: 'ok' }), justOn: true } : { ...c, justOn: false },
           ),
         )
-      }, 650 * (i + 1))
+      }, stepMs * (i + 1))
     })
-    setTimeout(() => setQuality((q) => q.map((c) => ({ ...c, justOn: false }))), 650 * (SENSORS.length + 1))
+    setTimeout(() => setQuality((q) => q.map((c) => ({ ...c, justOn: false }))), stepMs * (SENSORS.length + 1))
   }, [send])
 
   const fixSensor = useCallback((ch) => {
@@ -297,8 +337,9 @@ export function KinesisProvider({ children }) {
       subscribe, emit, send, act, say, toast,
       levelsRef, historyRef, headRef, firedRef,
       spokenScan, setSpokenScan, showKeys, setShowKeys, server, demoSeizure, outbox,
+      scene: SCENE, plug, perform,
     }),
-    [mode, streaming, profile, quality, powerOn, fixSensor, subscribe, emit, send, act, say, toast, spokenScan, showKeys, server, demoSeizure, outbox],
+    [mode, streaming, profile, quality, powerOn, fixSensor, subscribe, emit, send, act, say, toast, spokenScan, showKeys, server, demoSeizure, outbox, plug, perform],
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
