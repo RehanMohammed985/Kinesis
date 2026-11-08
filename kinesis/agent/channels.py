@@ -98,8 +98,12 @@ def send_text(contact, text):
 
 def place_call(contact, say=None):
     """mac: rings the contact through the user's phone; the app speaks replies
-    out loud during the call. twilio: calls and speaks `say`."""
+    out loud during the call. twilio: calls and speaks `say`.
+    Calls stay in practice mode unless KINESIS_LIVE_CALLS=1 too, so texts can
+    go out for real on stage without a call window popping up."""
     b = backend()
+    if b != "dry" and os.environ.get("KINESIS_LIVE_CALLS") != "1":
+        b = "dry"
     try:
         if b == "mac":
             _mac_call(contact["phone"])
@@ -108,6 +112,42 @@ def place_call(contact, say=None):
         return _log({"mode": b, "kind": "call", "to": contact["name"], "phone": contact.get("phone"), "text": say or "", "ok": True})
     except Exception as e:  # noqa: BLE001
         return _log({"mode": b, "kind": "call", "to": contact["name"], "ok": False, "error": str(e)})
+
+
+def _voice_file(text):
+    """The phrase in the person's own voice (ElevenLabs), from the app's dev
+    server, which caches every phrase. Saved where Messages can attach it."""
+    app = os.environ.get("KINESIS_APP", "http://localhost:5173")
+    r = requests.post(f"{app}/api/speak", json={"text": text}, timeout=30)
+    if r.status_code >= 300 or not r.headers.get("Content-Type", "").startswith("audio"):
+        raise RuntimeError(f"voice not available ({r.status_code}); is the app running with an ElevenLabs key?")
+    folder = Path.home() / "Pictures" / "Kinesis"   # Messages attaches files from here reliably
+    folder.mkdir(parents=True, exist_ok=True)
+    name = "".join(ch for ch in text.lower() if ch.isalnum() or ch == " ").strip().replace(" ", "-")[:40] or "message"
+    path = folder / f"{name}.mp3"
+    path.write_bytes(r.content)
+    return path
+
+
+def _mac_file(phone, path):
+    _osascript(
+        'tell application "Messages"\n'
+        "  set svc to 1st account whose service type = iMessage\n"
+        f'  send (POSIX file "{path}") to participant "{phone}" of svc\n'
+        "end tell"
+    )
+
+
+def send_voice(contact, text):
+    """The words as a voice message in the person's own voice. Mac: an audio
+    attachment in Messages. Practice mode and Twilio: logged."""
+    b = backend()
+    try:
+        if b == "mac":
+            _mac_file(contact["phone"], _voice_file(text))
+        return _log({"mode": b if b == "mac" else "dry", "kind": "voice", "to": contact["name"], "phone": contact.get("phone"), "text": text, "ok": True})
+    except Exception as e:  # noqa: BLE001
+        return _log({"mode": b, "kind": "voice", "to": contact["name"], "text": text, "ok": False, "error": str(e)})
 
 
 def send_file(contact, path, text):

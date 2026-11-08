@@ -285,7 +285,7 @@ python -m kinesis.server --synthetic        # or --port <serial port> with the h
 cd app && npm run dev                       # open http://localhost:5173
 ```
 
-Full setup, the headset, the iPad and the demo script: **[docs/SETUP.md](docs/SETUP.md)**.
+Full setup, the headset, the iPad and the demo script: **[docs/SETUP.md](docs/SETUP.md)**. Video shot list: **[docs/DEMO.md](docs/DEMO.md)**.
 
 ## Repository layout
 
@@ -301,7 +301,7 @@ kinesis/
 app/               React app and its dev server (voice, replies, caregiver feed, /core forwarding)
 scripts/           record, train, validate (SSVEP, seizure, speech), voice setup, README charts
 tests/             agent checks on simulated signals
-docs/              SETUP, VALIDATION, HARDWARE, PROTOCOL, DESIGN, PLAN
+docs/              SETUP, DEMO, VALIDATION, HARDWARE, PROTOCOL, DESIGN, PLAN
 ```
 
 ## Tech stack

@@ -10,7 +10,15 @@ import Glyph from './Glyph.jsx'
 // items: [{ id, label, sub, glyph, kind, area, avatar, extra, onSelect }]
 // layout: { columns, rows, areas } as CSS grid strings, plus an optional
 // layout.phone used on narrow screens (phones held upright)
-export default function Board({ items, layout, help = true, onHelp, onBack, startAt = 0, dwell = 1800, scanKey }) {
+// Scan pace: 2.4 s per tile by default, calm enough to follow on a video.
+// ?dwell=3 in the address sets it in seconds. A new screen holds its first
+// tile a little longer, and after a choice the frame rests on what was chosen
+// before it moves on, so nothing feels rushed.
+const SCAN_MS = (Number(new URLSearchParams(location.search).get('dwell')) || 2.4) * 1000
+const FIRST_EXTRA = 0.6   // x dwell, extra time on the first tile of a new screen
+const SETTLE_MS = 1400    // rest on the chosen tile after a choice
+
+export default function Board({ items, layout, help = true, onHelp, onBack, startAt = 0, dwell = SCAN_MS, scanKey }) {
   const k = useKinesis()
   const narrow = useNarrow()
   const grid = narrow && layout.phone ? layout.phone : layout
@@ -35,7 +43,7 @@ export default function Board({ items, layout, help = true, onHelp, onBack, star
   useEffect(() => {
     setIndex(startAt)
     setPaused(false)
-    startRef.current = performance.now()
+    startRef.current = performance.now() + FIRST_EXTRA * dwell
   }, [scanKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const commit = useCallback((i) => {
@@ -48,7 +56,7 @@ export default function Board({ items, layout, help = true, onHelp, onBack, star
     setTimeout(() => {
       busyRef.current = false
       setCommitted(null)
-      startRef.current = performance.now()
+      startRef.current = performance.now() + SETTLE_MS
       item.onSelect?.()
     }, 300)
   }, [])
@@ -88,7 +96,7 @@ export default function Board({ items, layout, help = true, onHelp, onBack, star
         startRef.current = now
         setIndex((i) => (i + 1) % items.length)
       }
-      if (clockRef.current) clockRef.current.style.transform = `scaleX(${Math.min(1, progress)})`
+      if (clockRef.current) clockRef.current.style.transform = `scaleX(${Math.min(1, Math.max(0, progress))})`
       if (fillRef.current) {
         const key = LEVEL_KEY[state.current.profile.select]
         const v = key === 'look' ? 0 : k.levelsRef.current[key] || 0

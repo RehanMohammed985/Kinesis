@@ -259,8 +259,8 @@ export function KinesisProvider({ children }) {
           speakAsUser(action.text)
           break
         case 'message':
-          outbox({ kind: 'message', to: contact?.name, text: action.text })
-          say(`Sent to ${contact?.name}`)
+          outbox({ kind: 'message', to: contact?.name, text: action.text, voice: Boolean(action.voice) })
+          say(action.voice ? `Sent to ${contact?.name}, with a voice message` : `Sent to ${contact?.name}`)
           break
         case 'help':
           outbox({ kind: 'help', to: CARE_LIST.join(', '), text: 'Walter needs help' })

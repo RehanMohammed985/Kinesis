@@ -156,10 +156,13 @@ async def main():
                 kind = msg.get("type")
                 if kind == "calibrate":
                     step = msg.get("step")
+                    quick = bool(msg.get("quick"))  # 10 s check for someone already set up
                     if step == "rest":
-                        state["rest_until"] = time.time() + 5
+                        state["rest_until"] = time.time() + (3.5 if quick else 5)
                         board.mark(1)
-                        cal["step"], cal["c"] = "rest", None
+                        cal["step"], cal["c"] = ("quick" if quick else "rest"), None
+                    elif quick:
+                        cal["step"] = None  # detectors run as usual; nothing new to learn
                     elif step in ("clench", "blink2"):
                         board.mark(2 if step == "clench" else 3)
                         cal["step"] = step

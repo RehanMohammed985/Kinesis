@@ -36,7 +36,7 @@ export default function Rail({ onSetup }) {
         <span className="bars" aria-hidden="true"><i /><i /><i /></span>
         {k.mode !== 'core' ? 'Simulator' : k.streaming === false ? 'No data from headset' : k.streaming ? 'Headset on' : 'Connecting'}
       </span>
-      {on.length > 0 && (
+      {k.mode === 'core' && k.streaming && on.length > 0 && (
         <span className={`pill ${anyBad ? 'warn' : ''}`}>
           <span className={`dot ${anyBad ? 'bad' : 'on'}`} />
           {good} of {k.quality.length} sensors

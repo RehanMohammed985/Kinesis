@@ -9,6 +9,17 @@ function when(ts) {
   return new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase()
 }
 
+// Play a message in Walter's own voice (the app's ElevenLabs voice, cached).
+async function hear(text) {
+  try {
+    const r = await fetch('/api/speak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
+    if (!r.ok) throw new Error()
+    await new Audio(URL.createObjectURL(await r.blob())).play()
+  } catch {
+    if ('speechSynthesis' in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance(text))
+  }
+}
+
 function chime() {
   try {
     const ctx = new AudioContext()
@@ -56,6 +67,7 @@ export default function Caregiver() {
         <article key={`${m.at}-${i}`} className={`msg ${m.kind}`}>
           <span className="meta">{LABEL[m.kind] || 'Update'}{m.to ? `, to ${m.to}` : ''}, {when(m.at)}</span>
           <span className="text">{m.text}</span>
+          {m.voice && <button className="hear" onClick={() => hear(m.text)}>Play in Walter's voice</button>}
         </article>
       ))}
     </main>

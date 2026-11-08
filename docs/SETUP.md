@@ -120,14 +120,14 @@ Our headset has the electrodes on **pins 2 to 7**. The core reads this map from 
 
 | System | How |
 |---|---|
-| Mac | `ls /dev/cu.usbmodem*`, for example `/dev/cu.usbmodem1101` |
+| Mac | `ls /dev/cu.usbmodem*`, for example `/dev/cu.usbserial-A5069RR4` |
 | Windows | Device Manager, Ports (COM and LPT), for example `COM5` |
 | Linux | `ls /dev/ttyACM* /dev/ttyUSB*` |
 
 ## 5. Start the core
 
 ```bash
-python -m kinesis.server --port /dev/cu.usbmodem1101      # Windows: --port COM5
+python -m kinesis.server --port /dev/cu.usbserial-A5069RR4      # Windows: --port COM5
 ```
 
 The core turns on pins 2 to 7 (about 30 s), records the session to `data/sessions/`, loads the gesture model and serves the app on port 8765.
@@ -199,6 +199,8 @@ The three inputs: **clench chooses, double blink goes back, double clench pauses
 
 **Check:** the core prints `Gestures: learned this person's clench and double blink` and saves the model to `data/gesture_model.json`. If it prints `not enough clean attempts`, run Calibrate again and make each attempt firmer.
 
+**Quick check, 12 s.** On Fit, after a full calibration. A 4 s rest resets the quiet level, then one clench and one double blink confirm it works. It keeps the learned model. Use it each time the headset goes back on, and for the onboarding shot in the video.
+
 ## 9. Live test
 
 On **Home**, with the terminal visible:
@@ -227,6 +229,8 @@ Wearer: a teammate as Walter. iPad on a stand facing the judges, caregiver page 
 
 Run it end to end three times before presenting.
 
+For the recorded video (onboarding plus three scenarios, with cameras and a shot list): **[DEMO.md](DEMO.md)**.
+
 ## 11. Going live (real texts and calls)
 
 Nothing is sent until you turn it on. Put real numbers in `data/profile.json` first.
@@ -234,10 +238,13 @@ Nothing is sent until you turn it on. Put real numbers in `data/profile.json` fi
 **Mac, through Messages and the paired iPhone:**
 
 ```bash
-KINESIS_LIVE=1 KINESIS_BACKEND=mac python -m kinesis.server --port /dev/cu.usbmodem1101
+KINESIS_LIVE=1 KINESIS_BACKEND=mac python -m kinesis.server --port /dev/cu.usbserial-A5069RR4
 ```
 
-The Mac must be signed in to Messages with iMessage. Calls open the phone dialer through the paired iPhone.
+The Mac must be signed in to Messages with iMessage.
+- **Texts** from the app also send a voice message: the same words as an mp3 in the person's ElevenLabs voice (the app must be running, since it makes the audio).
+- **Calls** stay in practice mode unless you also set `KINESIS_LIVE_CALLS=1`. Then they open the dialer through the paired iPhone.
+- **One contact quickly:** `python scripts/set_contact.py linda +15551234567 --test` writes the number to `data/profile.json` and sends a test text and voice message.
 
 **Twilio, from anywhere:**
 
@@ -245,7 +252,7 @@ The Mac must be signed in to Messages with iMessage. Calls open the phone dialer
 export TWILIO_ACCOUNT_SID=AC...
 export TWILIO_AUTH_TOKEN=...
 export TWILIO_FROM=+1...
-KINESIS_LIVE=1 KINESIS_BACKEND=twilio python -m kinesis.server --port /dev/cu.usbmodem1101
+KINESIS_LIVE=1 KINESIS_BACKEND=twilio python -m kinesis.server --port /dev/cu.usbserial-A5069RR4
 ```
 
 A Twilio trial account can only text and call numbers you have verified in Twilio.

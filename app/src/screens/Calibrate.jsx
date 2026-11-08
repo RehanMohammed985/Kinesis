@@ -8,13 +8,22 @@ import { useKinesis } from '../engine/kinesis.jsx'
 // clench can never count twice and nothing races ahead. With the headset on,
 // the core learns this person's own clench and double blink from these steps
 // (kinesis/signal/learned.py), then the double clench step checks the result.
-const STEPS = [
+const FULL = [
   { id: 'rest', label: 'Stay still', cue: 'Stay still and relaxed', hint: 'This sets the quiet level for every sensor.', seconds: 6 },
   { id: 'clench', label: 'Clench', input: 'clench', reps: 5, now: 'Clench now', hint: 'Clench your jaw firmly for half a second, then let go.' },
   { id: 'blink2', label: 'Double blink', input: 'blink2', reps: 5, now: 'Blink twice now', hint: 'Two quick, firm blinks.' },
   { id: 'clench2', label: 'Double clench', input: 'clench2', reps: 3, now: 'Clench twice now', hint: 'Two quick clenches, close together.' },
 ]
-const PHASE_MS = { ready: 1400, now: 2200, relax: 1600 }
+const FULL_MS = { ready: 1400, now: 2200, relax: 1600 }
+
+// Quick check, about 12 s, for someone already calibrated: a short rest for
+// the baseline, then one clench and one double blink to confirm it works.
+const QUICK = [
+  { id: 'rest', label: 'Stay still', cue: 'Stay still', hint: 'Setting the quiet level.', seconds: 4 },
+  { id: 'clench', label: 'Clench', input: 'clench', reps: 1, now: 'Clench now', hint: 'One firm clench.' },
+  { id: 'blink2', label: 'Double blink', input: 'blink2', reps: 1, now: 'Blink twice now', hint: 'Two quick blinks.' },
+]
+const QUICK_MS = { ready: 800, now: 2600, relax: 700 }
 const PROFILE = { select: 'clench', back: 'blink2', rest: 'clench2' }
 
 function tone(freq = 660) {
@@ -32,7 +41,9 @@ function tone(freq = 660) {
   } catch { /* no audio */ }
 }
 
-export default function Calibrate() {
+export default function Calibrate({ quick = false }) {
+  const STEPS = quick ? QUICK : FULL
+  const PHASE_MS = quick ? QUICK_MS : FULL_MS
   const k = useKinesis()
   const { go } = useNav()
   const [step, setStep] = useState(0)
@@ -50,7 +61,7 @@ export default function Calibrate() {
   // tell the core which step this is
   useEffect(() => {
     if (!current) return
-    k.send({ type: 'calibrate', step: current.id })
+    k.send({ type: 'calibrate', step: current.id, quick })
     setRep(0)
     setPhase(current.seconds ? 'hold' : 'ready')
     phaseStart.current = performance.now()
@@ -104,13 +115,22 @@ export default function Calibrate() {
   function next() {
     if (step + 1 < STEPS.length) setStep((s) => s + 1)
     else {
-      k.send({ type: 'calibrate', step: 'done' })
+      k.send({ type: 'calibrate', step: 'done', quick })
       k.setProfile(PROFILE)
       setDone(true)
+      if (quick) setTimeout(() => go('home'), 2600)
     }
   }
 
-  if (done) return <Results hits={hits} learned={learned} onAgain={() => { setHits({}); setLearned(null); setDone(false); setStep(0) }} onDone={() => go('home')} />
+  if (done && quick) {
+    return (
+      <section className="cal-main" style={{ flex: 1 }} aria-label="Ready">
+        <h1 className="cal-cue">Ready.</h1>
+        <p className="cal-hint">Clench chooses. Double blink goes back. Double clench pauses.</p>
+      </section>
+    )
+  }
+  if (done) return <Results steps={STEPS} hits={hits} learned={learned} onAgain={() => { setHits({}); setLearned(null); setDone(false); setStep(0) }} onDone={() => go('home')} />
 
   const elapsed = (performance.now() - phaseStart.current) / 1000
   const total = current.seconds || PHASE_MS[phase] / 1000
@@ -147,8 +167,8 @@ export default function Calibrate() {
   )
 }
 
-function Results({ hits, learned, onAgain, onDone }) {
-  const rows = STEPS.filter((s) => s.input).map((s) => {
+function Results({ steps, hits, learned, onAgain, onDone }) {
+  const rows = steps.filter((s) => s.input).map((s) => {
     const r = hits[s.id] || []
     return { s, got: r.filter(Boolean).length }
   })

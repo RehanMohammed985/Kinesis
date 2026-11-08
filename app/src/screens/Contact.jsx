@@ -4,8 +4,9 @@ import { CONTACTS, QUICK_TEXTS } from '../data.js'
 import { useKinesis } from '../engine/kinesis.jsx'
 import Board from '../ui/Board.jsx'
 
-// One person: call them, or send one of a few texts. Texts go out through the
-// core (practice mode until it is set live) and show up on the caregiver page.
+// One person: call them, or send one of a few texts. Each text also goes as a
+// voice message in the person's own voice (ElevenLabs). Texts go out through
+// the core (practice mode until it is set live) and show up on the caregiver page.
 const LAYOUT = {
   columns: '1.25fr 1fr 1fr',
   rows: '1fr 1fr',
@@ -20,13 +21,13 @@ export default function Contact({ contact = 'linda' }) {
   const [sent, setSent] = useState(null)
 
   const text = (t) => {
-    k.act({ action: 'message', contact: person.id, text: t })
+    k.act({ action: 'message', contact: person.id, text: t, voice: true })
     setSent(t)
   }
 
   const items = [
     { id: 'call', area: 'call', kind: 'big', glyph: 'call', label: `Call ${person.name}`, onSelect: () => go('calling', { contact: person.id }) },
-    ...QUICK_TEXTS.map((t, i) => ({ id: `t${i}`, area: `t${i}`, kind: 'phrase', glyph: 'text', label: t, onSelect: () => text(t) })),
+    ...QUICK_TEXTS.map((t, i) => ({ id: `t${i}`, area: `t${i}`, kind: 'phrase', glyph: 'text', label: t, sub: 'Text and voice message', onSelect: () => text(t) })),
     { id: 'back', area: 'back', kind: 'quiet', glyph: 'back', label: 'Back', onSelect: () => go('call') },
   ]
 

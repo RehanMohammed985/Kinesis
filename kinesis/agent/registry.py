@@ -24,7 +24,11 @@ class Registry:
         if kind == "speak":
             return {"ok": True}  # the app plays it in the person's own voice
         if kind == "message":
-            return channels.send_text(contact(p, a["contact"]), a["text"])
+            c = contact(p, a["contact"])
+            res = channels.send_text(c, a["text"])
+            if a.get("voice"):  # the same words as a voice message, in the person's own voice
+                channels.send_voice(c, a["text"])
+            return res
         if kind == "call":
             c = contact(p, a["contact"])
             return channels.place_call(c, say=f"{p['name']} is calling you through Kinesis and will reply with a computer voice.")
