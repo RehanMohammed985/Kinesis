@@ -154,9 +154,11 @@ export default function Calibrate({ quick = false, scripted = false }) {
             ))}
           </div>
         )}
-        <div className="row">
-          <button className="btn ghost" onClick={next}>Skip this step</button>
-        </div>
+        {!scripted && (
+          <div className="row">
+            <button className="btn ghost" onClick={next}>Skip this step</button>
+          </div>
+        )}
       </div>
     </section>
   )
