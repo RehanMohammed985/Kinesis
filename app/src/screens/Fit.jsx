@@ -60,6 +60,12 @@ export default function Fit() {
       </svg>
 
       <div className="fixes">
+        {k.mode !== 'core' && (
+          <p className="nodata sim">
+            <b>Simulator: these readings are pretend.</b> The app is not connected to the Kinesis core, so it is not reading
+            the headset. Start the core (python -m kinesis.server --port ...) and this screen switches to the real sensors.
+          </p>
+        )}
         {k.mode === 'core' && k.streaming === false && (
           <p className="nodata">
             <b>No data is coming from the headset.</b> Check the USB cable, quit the EXG Visualizer, and restart the core.
