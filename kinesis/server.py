@@ -176,11 +176,26 @@ async def main():
         print(f"App on another laptop: set KINESIS_CORE=ws://{ip}:{args.ws_port} in app/.env")
         last_q = 0.0
         last_m = 0.0
+        # Is the headset actually sending? The app shows this instead of
+        # "Headset on" whenever it is connected to the core.
+        feed = {"newest": 0.0, "seen": time.time(), "told": 0.0, "warned": 0.0, "start": time.time()}
         while True:
             await asyncio.sleep(0.05)
             now = time.time()
-            eeg, _ = board.latest(int(2.0 * FS))  # detectors see the raw signal only
-            if eeg.shape[1] < int(1.2 * FS):
+            eeg, ts = board.latest(int(2.0 * FS))  # detectors see the raw signal only
+            newest = float(ts[-1]) if ts.size else 0.0
+            if newest > feed["newest"]:
+                feed["newest"], feed["seen"] = newest, now
+            streaming = now - feed["seen"] < 2.0 and ts.size > 0
+            if now - feed["told"] >= 1.0:
+                feed["told"] = now
+                rate = int((ts > newest - 1.0).sum()) if streaming else 0
+                await broadcast({"type": "status", "streaming": streaming, "rate": rate})
+                if not streaming and now - feed["start"] > 8 and now - feed["warned"] > 5:
+                    feed["warned"] = now
+                    print("No data from the headset. Check the USB cable and the port, close the EXG Visualizer, "
+                          "then run: python scripts/check_headset.py")
+            if eeg.shape[1] < int(1.2 * FS) or not streaming:
                 continue
             if state["rest_until"] and now >= state["rest_until"]:
                 rest = read(int(4.5 * FS))[0]

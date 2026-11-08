@@ -60,6 +60,12 @@ export default function Fit() {
       </svg>
 
       <div className="fixes">
+        {k.mode === 'core' && k.streaming === false && (
+          <p className="nodata">
+            <b>No data is coming from the headset.</b> Check the USB cable, quit the EXG Visualizer, and restart the core.
+            To find the problem, run <b>python scripts/check_headset.py</b>.
+          </p>
+        )}
         <div>
           <h1 className="screen-title">Fit the headset</h1>
           <p className="screen-lede">

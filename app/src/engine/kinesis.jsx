@@ -32,6 +32,7 @@ const SIM_READINGS = {
 
 export function KinesisProvider({ children }) {
   const [mode, setMode] = useState('sim') // 'core' | 'sim'
+  const [streaming, setStreaming] = useState(null) // core only: is the headset sending data
   const [profile, setProfile] = useState({ select: 'clench', back: 'blink2', rest: 'alpha' })
   const [quality, setQuality] = useState(initialQuality)
   const [toast, setToast] = useState(null)
@@ -87,6 +88,7 @@ export function KinesisProvider({ children }) {
       ws.onclose = () => {
         if (wsRef.current === ws) wsRef.current = null
         setMode('sim')
+        setStreaming(null)
         if (!stopped) retry = setTimeout(connect, 3000)
       }
       ws.onerror = () => ws.close()
@@ -97,6 +99,7 @@ export function KinesisProvider({ children }) {
           Object.assign(levelsRef.current, msg)
           return
         }
+        if (msg.type === 'status') { setStreaming(Boolean(msg.streaming)); return }
         if (msg.type === 'hello' && msg.profile) setProfile((p) => ({ ...p, ...msg.profile }))
         if (msg.type === 'quality') {
           setQuality((q) => q.map((c) => msg.channels.find((m) => m.ch === c.ch) || c))
@@ -289,12 +292,12 @@ export function KinesisProvider({ children }) {
 
   const value = useMemo(
     () => ({
-      mode, profile, setProfile, quality, powerOn, fixSensor,
+      mode, streaming, profile, setProfile, quality, powerOn, fixSensor,
       subscribe, emit, send, act, say, toast,
       levelsRef, historyRef, headRef, firedRef,
       spokenScan, setSpokenScan, showKeys, setShowKeys, server, demoSeizure, outbox,
     }),
-    [mode, profile, quality, powerOn, fixSensor, subscribe, emit, send, act, say, toast, spokenScan, showKeys, server, demoSeizure, outbox],
+    [mode, streaming, profile, quality, powerOn, fixSensor, subscribe, emit, send, act, say, toast, spokenScan, showKeys, server, demoSeizure, outbox],
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

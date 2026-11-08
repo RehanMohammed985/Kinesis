@@ -582,3 +582,9 @@ button { font: inherit; color: inherit; }
 .brain-row span { color: var(--ink-soft); text-align: right; }
 .fact.warn { box-shadow: inset 0 0 0 3px var(--alarm); }
 .fact.warn b { color: var(--alarm); }
+
+/* the core is connected but the headset sends nothing */
+.nodata { margin: 0; background: var(--alarm-wash); color: var(--ink); border-radius: 14px; padding: 14px 16px; box-shadow: inset 0 0 0 2px var(--alarm); }
+.nodata b { color: var(--alarm); }
+.pill.warn { color: var(--alarm); font-weight: 700; }
+.pill.warn .bars i { background: var(--alarm); }

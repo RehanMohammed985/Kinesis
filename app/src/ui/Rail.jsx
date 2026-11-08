@@ -32,9 +32,9 @@ export default function Rail({ onSetup }) {
         <small>{t.day}, {t.time}</small>
       </span>
       <span className="rail-spacer" />
-      <span className={`pill ${k.mode === 'core' ? 'live' : 'sim'}`}>
+      <span className={`pill ${k.mode !== 'core' ? 'sim' : k.streaming === false ? 'warn' : 'live'}`}>
         <span className="bars" aria-hidden="true"><i /><i /><i /></span>
-        {k.mode === 'core' ? 'Headset on' : 'Simulator'}
+        {k.mode !== 'core' ? 'Simulator' : k.streaming === false ? 'No data from headset' : k.streaming ? 'Headset on' : 'Connecting'}
       </span>
       {on.length > 0 && (
         <span className={`pill ${anyBad ? 'warn' : ''}`}>
