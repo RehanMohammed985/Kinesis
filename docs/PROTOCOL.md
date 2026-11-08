@@ -9,7 +9,7 @@ All messages are JSON with a `type` field.
 ### hello
 Sent once on connect.
 ```json
-{"type": "hello", "board": "knight", "synthetic": false, "fs": 125, "profile": {"name": "Maya", "select": "clench", "back": "blink2", "rest": "alpha"}}
+{"type": "hello", "board": "knight", "synthetic": false, "fs": 125, "profile": {"name": "Walter", "select": "clench", "back": "blink2", "rest": "alpha"}}
 ```
 
 ### levels (about 20 per second)
@@ -64,7 +64,7 @@ A task plan for confirmation, then progress as it runs.
 ### alert / notice
 From the monitor agent. `alert` opens the alarm screen; `notice` is a toast.
 ```json
-{"type": "alert", "kind": "seizure_like", "text": "Kinesis detected seizure-like brain activity on Maya at 3:21 pm. Please check on them now."}
+{"type": "alert", "kind": "seizure_like", "text": "Kinesis detected seizure-like brain activity on Walter at 3:21 pm. Please check on them now."}
 {"type": "notice", "text": "Seizure-like activity ended after about 26 seconds. Logged for your doctor."}
 ```
 
@@ -79,8 +79,8 @@ From the report agent, in answer to `report_request` or `action: report`. `file`
 ```json
 {"type": "calibrate", "step": "rest"}
 {"type": "action", "action": "speak", "text": "Pretty well, thanks"}
-{"type": "action", "action": "call", "contact": "mom"}
-{"type": "action", "action": "message", "contact": "sam", "text": "I'm okay"}
+{"type": "action", "action": "call", "contact": "linda"}
+{"type": "action", "action": "message", "contact": "maria", "text": "I'm okay"}
 {"type": "action", "action": "help"}
 {"type": "action", "action": "media", "command": "page_next"}
 {"type": "action", "action": "report", "recipient": "dr_patel"}
@@ -88,7 +88,7 @@ From the report agent, in answer to `report_request` or `action: report`. `file`
 {"type": "action", "action": "note", "text": "My back hurt"}
 {"type": "confirm", "id": "t1"}
 {"type": "cancel", "id": "t1"}
-{"type": "heard", "speaker": "Sam", "text": "Do you want to watch something tonight?"}
+{"type": "heard", "speaker": "Linda", "text": "Do you want to watch the game tonight?"}
 {"type": "report_request"}
 {"type": "demo_seizure"}
 ```

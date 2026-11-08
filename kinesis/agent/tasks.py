@@ -30,7 +30,7 @@ def plan_for(task, p):
              "run": {"action": "message", "contact": care, "text": f"Can you pick up my {name} at {pharm.get('name', 'the pharmacy')} today?"}},
         ]
     if task == "tell_family":
-        fam = [c for c, v in p["contacts"].items() if v.get("relation") in ("mother", "father", "sister", "brother", "partner")]
+        fam = [c for c, v in p["contacts"].items() if v.get("relation") in ("wife", "husband", "partner", "daughter", "son", "mother", "father", "sister", "brother")]
         steps = [{"what": "Write the message", "detail": '"Good day today. Love you."'}]
         for c in fam:
             steps.append({"what": f"Send to {p['contacts'][c]['name']}", "detail": "Text message",

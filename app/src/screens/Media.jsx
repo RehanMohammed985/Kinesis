@@ -20,14 +20,14 @@ export default function Media() {
     { id: 'next', area: 'next', kind: 'big', glyph: 'page', label: 'Next page', sub: `Page ${page + 1}`, onSelect: () => { setPage((p) => p + 1); media('page_next', `Page ${page + 1}`) } },
     { id: 'prev', area: 'prev', glyph: 'pageBack', label: 'Previous page', onSelect: () => { setPage((p) => Math.max(1, p - 1)); media('page_prev', `Page ${Math.max(1, page - 1)}`) } },
     { id: 'read', area: 'read', glyph: 'read', label: reading ? 'Stop reading aloud' : 'Read aloud', onSelect: () => { setReading((r) => !r); media(reading ? 'read_stop' : 'read_start', reading ? 'Stopped reading' : 'Reading aloud') } },
-    { id: 'music', area: 'music', glyph: playing ? 'pause' : 'play', label: playing ? 'Pause music' : 'Play music', sub: 'Saturday playlist', onSelect: () => { setPlaying((p) => !p); media(playing ? 'pause' : 'play', playing ? 'Music paused' : 'Playing Saturday playlist') } },
+    { id: 'music', area: 'music', glyph: playing ? 'pause' : 'play', label: playing ? 'Pause music' : 'Play music', sub: 'Motown classics', onSelect: () => { setPlaying((p) => !p); media(playing ? 'pause' : 'play', playing ? 'Music paused' : 'Playing Motown classics') } },
     { id: 'back', area: 'back', kind: 'quiet', glyph: 'back', label: 'Back', onSelect: () => go('home') },
   ]
 
   return (
     <>
       <div className="panel">
-        <h1 className="screen-title">Project Hail Mary</h1>
+        <h1 className="screen-title">Lonesome Dove</h1>
         <p className="screen-lede">Chapter 12, page {page}{playing ? '. Music playing.' : '.'}</p>
       </div>
       <Board scanKey="media" items={items} layout={LAYOUT} onHelp={() => go('help')} onBack={() => go('home')} />

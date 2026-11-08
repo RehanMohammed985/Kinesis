@@ -5,6 +5,10 @@ import './styles.css'
 import App from './App.jsx'
 import Caregiver from './screens/Caregiver.jsx'
 import { KinesisProvider } from './engine/kinesis.jsx'
+import { unlockAudio } from './engine/speak.js'
+
+window.addEventListener('pointerdown', unlockAudio, { once: true })
+window.addEventListener('keydown', unlockAudio, { once: true })
 
 function Root() {
   const [hash, setHash] = useState(location.hash)

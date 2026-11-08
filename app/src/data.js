@@ -2,25 +2,42 @@
 // WebSocket (profile, replies, plans). Names and places are placeholders.
 
 export const PERSON = {
-  name: 'Maya',
-  fullName: 'Maya Okafor',
-  about: '34, ALS diagnosed 2 years ago, former high school chemistry teacher, lives with her partner Sam in Raleigh',
+  name: 'Walter',
+  fullName: 'Walter Reyes',
+  about: '72, had a stroke 18 months ago that took most of his speech and the use of his right side, retired city bus driver, lives with his wife Linda in Raleigh',
 }
 
 export const CONTACTS = [
-  { id: 'mom', name: 'Mom', sub: 'Ada Okafor', initials: 'A' },
-  { id: 'sam', name: 'Sam', sub: 'Partner', initials: 'S' },
+  { id: 'linda', name: 'Linda', sub: 'Wife', initials: 'L' },
+  { id: 'maria', name: 'Maria', sub: 'Daughter', initials: 'M' },
+  { id: 'david', name: 'David', sub: 'Son', initials: 'D' },
+  { id: 'grace', name: 'Grace', sub: 'Home aide', initials: 'G' },
   { id: 'dr_patel', name: 'Dr. Patel', sub: 'Neurologist', initials: 'P' },
   { id: 'nurse', name: 'Nurse line', sub: 'Duke Health, 24 hours', initials: 'N' },
-  { id: 'ama', name: 'Ama', sub: 'Sister', initials: 'A' },
 ]
 
-export const CARE_LIST = ['Sam', 'Nurse line']
+export const CARE_LIST = ['Linda', 'Nurse line']
+
+// Say it: everyday needs, spoken out loud in the person's own voice. The
+// first one is what the lens lands on first.
+export const SAY = [
+  'I need water',
+  'I am in pain',
+  'I need the bathroom',
+  'I am cold',
+  'Please move my pillow',
+  'Turn on the TV',
+  'Thank you',
+  'I love you',
+]
+
+// Texts to one person, from their contact screen.
+export const QUICK_TEXTS = ['Can you come here?', 'I need help with something', 'I am okay. Love you.']
 
 export const HEARD_SAMPLES = [
   { speaker: 'Dr. Patel', text: 'How did you sleep last night?' },
-  { speaker: 'Sam', text: 'Do you want to watch something tonight?' },
-  { speaker: 'Mom', text: 'Are you warm enough in here?' },
+  { speaker: 'Linda', text: 'Do you want to watch the game tonight?' },
+  { speaker: 'Maria', text: 'Are you warm enough in here?' },
 ]
 
 export const CANNED_REPLIES = {
@@ -30,11 +47,11 @@ export const CANNED_REPLIES = {
     'My back kept me up',
     'Can we talk about it later?',
   ],
-  'Do you want to watch something tonight?': [
-    'Yes, something funny please',
+  'Do you want to watch the game tonight?': [
+    'Yes, put the game on',
     'Not tonight, I am tired',
-    'What were you thinking?',
-    'Can we finish the show from Sunday?',
+    'Who is playing?',
+    'Can we watch a movie instead?',
   ],
   'Are you warm enough in here?': [
     'I am a little cold',
@@ -48,12 +65,12 @@ export const TASKS = [
   {
     id: 'refill',
     label: 'Refill my prescription',
-    sub: 'Riluzole, due Thursday',
+    sub: 'Clopidogrel, due Thursday',
     steps: [
-      ['Find the prescription', 'Riluzole 50 mg, last filled Oct 9'],
+      ['Find the prescription', 'Clopidogrel 75 mg, last filled Oct 9'],
       ['Call the pharmacy', 'Walgreens, Hillsborough St'],
       ['Confirm pickup time', 'Ready today at 4:30 pm'],
-      ['Text Sam to pick it up', '"Can you grab my meds at 4:30?"'],
+      ['Text Linda to pick it up', '"Can you grab my pills at 4:30?"'],
     ],
   },
   {
@@ -81,12 +98,12 @@ export const TASKS = [
   {
     id: 'tell_family',
     label: 'Tell my family I\'m okay',
-    sub: 'Mom, Ama, Sam',
+    sub: 'Linda, Maria, David',
     steps: [
       ['Write the message', '"Good day today. Love you."'],
-      ['Send to Mom', 'iMessage'],
-      ['Send to Ama', 'iMessage'],
-      ['Send to Sam', 'iMessage'],
+      ['Send to Linda', 'Text message'],
+      ['Send to Maria', 'Text message'],
+      ['Send to David', 'Text message'],
     ],
   },
   {
@@ -108,7 +125,7 @@ export const NOTES = [
   'Good energy today',
   'Harder to swallow',
   'Short of breath',
-  'Muscle cramps',
+  'Right hand is stiff',
 ]
 
 export const REPORT = {
@@ -125,7 +142,7 @@ export const REPORT = {
   hours: [0.92, 0.95, 0.9, 0.88, 0.62, 0.58, 0.85, 0.9, 0.93, 0.91, 0.7, 0.86],
   notes: [
     ['9:12 am', 'My back hurt'],
-    ['1:40 pm', 'Muscle cramps'],
+    ['1:40 pm', 'Right hand is stiff'],
   ],
   brain: {
     seizure_like: [],
@@ -139,12 +156,13 @@ export const REPORT = {
 
 export const SENSORS = [
   // site, board channel, position on the head map (0..1, top is the nose)
-  { ch: 5, site: 'Fp1', x: 0.42, y: 0.16 },
-  { ch: 6, site: 'T7', x: 0.1, y: 0.5 },
-  { ch: 4, site: 'POz', x: 0.5, y: 0.73 },
-  { ch: 2, site: 'O1', x: 0.38, y: 0.86 },
-  { ch: 1, site: 'Oz', x: 0.5, y: 0.9 },
-  { ch: 3, site: 'O2', x: 0.62, y: 0.86 },
+  // channel = the board pin it is plugged into (kinesis/montage.py: pins 2-7)
+  { ch: 6, site: 'Fp1', x: 0.42, y: 0.16 },
+  { ch: 7, site: 'T7', x: 0.1, y: 0.5 },
+  { ch: 5, site: 'POz', x: 0.5, y: 0.73 },
+  { ch: 3, site: 'O1', x: 0.38, y: 0.86 },
+  { ch: 2, site: 'Oz', x: 0.5, y: 0.9 },
+  { ch: 4, site: 'O2', x: 0.62, y: 0.86 },
 ]
 
 export const INPUTS = {
@@ -166,5 +184,5 @@ export const LOOK_TILES = [
   { label: 'Yes', hz: 8.57 },
   { label: 'No', hz: 10 },
   { label: 'Help', hz: 12 },
-  { label: 'Call Sam', hz: 15 },
+  { label: 'Call Linda', hz: 15 },
 ]

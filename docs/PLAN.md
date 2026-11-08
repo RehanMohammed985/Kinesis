@@ -116,7 +116,7 @@ Rules we say out loud:
 ## Demo script (90 s)
 0. Setup: teammate puts on the headset, Fit map goes green, 2-minute calibration (sped up in the video, live if time allows)
 1. Talk: judge asks a question, mic hears it, four Gemini replies appear, clench picks one, spoken in own voice
-2. Call: clench on "Call Mom", the phone rings on the table, double blink answers
+2. Call: clench on "Call Linda", the phone rings on the table, double blink answers
 3. Control: blink = next page on the Kindle / iPad, alpha = play-pause music
 4. Hand off a task: clench on "Refill my prescription", the plan appears (find the prescription, call the pharmacy, confirm pickup, text me), double blink confirms, the steps tick off
 5. Ask for help: "I need help" goes to the caregiver's phone

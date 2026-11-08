@@ -6,7 +6,7 @@ import Board from '../ui/Board.jsx'
 
 // Outgoing: ringing, then connected with a timer. Incoming: answer or decline,
 // with the lens starting on Answer.
-export default function Calling({ contact = 'mom', incoming = false }) {
+export default function Calling({ contact = 'linda', incoming = false }) {
   const k = useKinesis()
   const { go } = useNav()
   const person = CONTACTS.find((c) => c.id === contact) || CONTACTS[0]

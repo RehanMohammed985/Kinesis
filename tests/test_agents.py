@@ -107,7 +107,7 @@ def main():
     print("refill task: 4 steps done ->", steps[-1]["detail"])
 
     # 6. replies without Gemini
-    items, src = CommunicationAgent(p).replies("Sam", "Do you want to watch something tonight?")
+    items, src = CommunicationAgent(p).replies("Linda", "Do you want to watch the game tonight?")
     assert len(items) == 4
     print(f"replies ({src}):", items)
 

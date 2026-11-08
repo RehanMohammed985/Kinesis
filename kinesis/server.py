@@ -172,7 +172,8 @@ async def main():
         except OSError:
             ip = "localhost"
         print(f"Core running. On this laptop: ws://localhost:{args.ws_port}")
-        print(f"From another laptop on the same wifi, open the app with ?core=ws://{ip}:{args.ws_port}")
+        print(f"iPad or phone on the same wifi: run the app on this laptop (cd app, npm run dev), then open http://{ip}:5173")
+        print(f"App on another laptop: set KINESIS_CORE=ws://{ip}:{args.ws_port} in app/.env")
         last_q = 0.0
         last_m = 0.0
         while True:

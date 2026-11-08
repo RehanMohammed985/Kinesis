@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import { CANNED_REPLIES, QUICK_TEXTS, SAY } from './src/data.js'
 
 // Server-side helpers for the demo. Keys live in app/.env (never committed)
 // and are only read here, so nothing secret reaches the browser bundle.
@@ -10,6 +11,9 @@ import react from '@vitejs/plugin-react'
 //   GEMINI_API_KEY, GEMINI_MODEL              -> /api/replies (predicted replies)
 // /api/outbox lets the caregiver page (any phone on the same wifi) receive
 // the messages the user sends, live.
+// /api/prewarm voices every fixed phrase once, so the demo plays instantly
+// and spends no credits on stage. /core forwards to the Kinesis core.
+//   KINESIS_CORE (default ws://localhost:8765)
 function kinesisServer(env) {
   const cacheDir = join(process.cwd(), '.cache', 'tts')
   mkdirSync(cacheDir, { recursive: true })
@@ -24,6 +28,25 @@ function kinesisServer(env) {
         try { resolve(JSON.parse(data || '{}')) } catch { resolve({}) }
       })
     })
+
+  const tts = async (text) => {
+    const model = env.ELEVENLABS_MODEL || 'eleven_flash_v2_5'
+    const key = createHash('sha1').update(`${env.ELEVENLABS_VOICE_ID}|${model}|${text}`).digest('hex')
+    const file = join(cacheDir, `${key}.mp3`)
+    if (!existsSync(file)) {
+      const r = await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${env.ELEVENLABS_VOICE_ID}?output_format=mp3_44100_128`,
+        {
+          method: 'POST',
+          headers: { 'xi-api-key': env.ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, model_id: model }),
+        },
+      )
+      if (!r.ok) throw new Error(`ElevenLabs ${r.status}: ${await r.text()}`)
+      writeFileSync(file, Buffer.from(await r.arrayBuffer()))
+    }
+    return file
+  }
 
   const json = (res, code, body) => {
     res.statusCode = code
@@ -50,23 +73,26 @@ function kinesisServer(env) {
           if (!env.ELEVENLABS_API_KEY || !env.ELEVENLABS_VOICE_ID) {
             return json(res, 503, { error: 'Set ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID in app/.env' })
           }
-          const model = env.ELEVENLABS_MODEL || 'eleven_flash_v2_5'
-          const key = createHash('sha1').update(`${env.ELEVENLABS_VOICE_ID}|${model}|${text}`).digest('hex')
-          const file = join(cacheDir, `${key}.mp3`)
-          if (!existsSync(file)) {
-            const r = await fetch(
-              `https://api.elevenlabs.io/v1/text-to-speech/${env.ELEVENLABS_VOICE_ID}?output_format=mp3_44100_128`,
-              {
-                method: 'POST',
-                headers: { 'xi-api-key': env.ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, model_id: model }),
-              },
-            )
-            if (!r.ok) return json(res, 502, { error: `ElevenLabs ${r.status}: ${await r.text()}` })
-            writeFileSync(file, Buffer.from(await r.arrayBuffer()))
+          try {
+            const file = await tts(text)
+            res.setHeader('Content-Type', 'audio/mpeg')
+            return res.end(readFileSync(file))
+          } catch (e) {
+            return json(res, 502, { error: String(e.message || e) })
           }
-          res.setHeader('Content-Type', 'audio/mpeg')
-          return res.end(readFileSync(file))
+        }
+
+        if (req.url === '/api/prewarm' && req.method === 'POST') {
+          if (!env.ELEVENLABS_API_KEY || !env.ELEVENLABS_VOICE_ID) {
+            return json(res, 503, { error: 'Set ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID in app/.env' })
+          }
+          const phrases = [...new Set([...SAY, ...QUICK_TEXTS, ...Object.values(CANNED_REPLIES).flat(),
+            'I need help', 'Yes', 'No', 'Can you say that again?', 'Give me a minute'])]
+          const failed = []
+          for (const p of phrases) {
+            try { await tts(p) } catch (e) { failed.push(`${p}: ${e.message}`) }
+          }
+          return json(res, failed.length ? 502 : 200, { voiced: phrases.length - failed.length, failed })
         }
 
         if (req.url === '/api/replies' && req.method === 'POST') {
@@ -130,6 +156,11 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
     plugins: [react(), kinesisServer(env)],
-    server: { port: 5173, host: true },
+    server: {
+      port: 5173,
+      host: true,
+      allowedHosts: true,
+      proxy: { '/core': { target: env.KINESIS_CORE || 'ws://localhost:8765', ws: true, rewrite: () => '/' } },
+    },
   }
 })

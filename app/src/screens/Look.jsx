@@ -44,7 +44,7 @@ function Tiles() {
     setTimeout(() => {
       setChosen(null)
       if (t.label === 'Help') go('help')
-      else if (t.label === 'Call Sam') go('calling', { contact: 'sam' })
+      else if (t.label === 'Call Linda') go('calling', { contact: 'linda' })
       else { k.act({ action: 'speak', text: t.label }); k.say(`Said: ${t.label}`) }
     }, 450)
   }

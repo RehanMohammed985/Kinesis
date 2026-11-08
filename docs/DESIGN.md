@@ -25,7 +25,7 @@ Type: Atkinson Hyperlegible Next for everything. It was designed by the Braille 
 
 ```
 +-------------------------------------------------------------+
-| Maya            2:41 pm          Headset on   Clench chooses |  status rail
+| Walter          2:41 pm          Headset on   Clench chooses |  status rail
 +-------------------------------------------------------------+
 |                         |                 |                 |
 |        Talk             |      Call       |   Get it done   |
@@ -50,5 +50,5 @@ Type: Atkinson Hyperlegible Next for everything. It was designed by the Braille 
 - Motion answers the system or the person: the lens moving, the fill rising, a commit. Nothing else moves.
 - Respect reduced motion: the lens jumps instead of slides.
 - Flicker tiles (look mode) only after a photosensitivity notice, and only 6 to 15 Hz.
-- Words name what happens: "Call Mom", "Send to Dr. Patel", not "Submit".
+- Words name what happens: "Call Linda", "Send to Dr. Patel", not "Submit".
 - Every confirm screen starts with the lens on Cancel.

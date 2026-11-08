@@ -18,7 +18,7 @@ export default function Help({ reason, text }) {
 
   const items = [
     { id: 'ok', area: 'a', kind: 'big', glyph: 'check', label: "I'm okay now", sub: 'Tells everyone it is resolved', onSelect: () => { k.act({ action: 'help_clear' }); k.say('Told everyone you are okay'); go('home') } },
-    { id: 'call', area: 'b', glyph: 'call', label: 'Call Sam', onSelect: () => go('calling', { contact: 'sam' }) },
+    { id: 'call', area: 'b', glyph: 'call', label: 'Call Linda', onSelect: () => go('calling', { contact: 'linda' }) },
   ]
 
   return (

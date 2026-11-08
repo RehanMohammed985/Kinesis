@@ -14,11 +14,13 @@ import Media from './screens/Media.jsx'
 import Help from './screens/Help.jsx'
 import Report from './screens/Report.jsx'
 import Look from './screens/Look.jsx'
+import Say from './screens/Say.jsx'
+import Contact from './screens/Contact.jsx'
 
 const Nav = createContext(null)
 export const useNav = () => useContext(Nav)
 
-const SCREENS = { fit: Fit, calibrate: Calibrate, home: Home, talk: Talk, call: Call, calling: Calling, tasks: Tasks, plan: Plan, media: Media, help: Help, report: Report, look: Look }
+const SCREENS = { fit: Fit, calibrate: Calibrate, home: Home, talk: Talk, call: Call, calling: Calling, tasks: Tasks, plan: Plan, media: Media, help: Help, report: Report, look: Look, say: Say, contact: Contact }
 
 export default function App() {
   const k = useKinesis()
@@ -31,7 +33,7 @@ export default function App() {
     () =>
       k.subscribe((msg) => {
         if (msg.type === 'alert' && msg.kind === 'seizure_like') {
-          k.outbox({ kind: 'help', to: 'Sam, Nurse line', text: msg.text })
+          k.outbox({ kind: 'help', to: 'Linda, Nurse line', text: msg.text })
           go('help', { reason: 'seizure', text: msg.text })
         }
       }),
@@ -43,7 +45,7 @@ export default function App() {
     const down = (e) => {
       if (e.repeat || e.metaKey || e.ctrlKey) return
       const key = e.key.toLowerCase()
-      if (key === 'i' && k.mode === 'sim') go('calling', { contact: 'sam', incoming: true })
+      if (key === 'i' && k.mode === 'sim') go('calling', { contact: 'linda', incoming: true })
       if (key === 'l') go('look')
       if (key === 'h' && e.shiftKey) go('home')
     }
@@ -76,7 +78,7 @@ function Keys() {
       <kbd>B B</kbd><span>Double blink</span>
       <kbd>E</kbd><span>Hold to close eyes</span>
       <kbd>1 to 4</kbd><span>Look at a tile</span>
-      <kbd>I</kbd><span>Incoming call from Sam</span>
+      <kbd>I</kbd><span>Incoming call from Linda</span>
       <kbd>L</kbd><span>Look mode</span>
       <kbd>S</kbd><span>Spoken scanning on or off</span>
       <kbd>X</kbd><span>Replay a recorded seizure</span>
