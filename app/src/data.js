@@ -31,6 +31,8 @@ export const SAY = [
   'I love you',
 ]
 
+export const SAY_GLYPH = ['water', 'pain', 'toilet', 'cold', 'pillow', 'tv', 'smile', 'heart']
+
 // Texts to one person, from their contact screen.
 export const QUICK_TEXTS = ['Can you come here?', 'I need help with something', 'I am okay. Love you.']
 

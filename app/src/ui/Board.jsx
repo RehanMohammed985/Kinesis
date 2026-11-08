@@ -133,7 +133,11 @@ export default function Board({ items, layout, help = true, onHelp, onBack, star
             onClick={() => commit(all.indexOf(it))}
             aria-current={all[index]?.id === it.id ? 'true' : undefined}
           >
-            {it.avatar ? <span className="avatar small" aria-hidden="true">{it.avatar}</span> : it.glyph ? <Glyph name={it.glyph} className={`cell-glyph ${it.kind === 'big' ? 'big' : ''}`} /> : <span />}
+            {it.avatar ? (
+              <span className="avatar small" aria-hidden="true">{it.avatar}</span>
+            ) : it.glyph ? (
+              it.kind === 'quiet' ? <Glyph name={it.glyph} className="cell-glyph" /> : <span className="well"><Glyph name={it.glyph} className="cell-glyph" /></span>
+            ) : <span />}
             <span className="cell-text">
               <span className="cell-label">{it.label}</span>
               {it.sub && <span className="cell-sub">{it.sub}</span>}

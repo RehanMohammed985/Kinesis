@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNav } from '../App.jsx'
-import { SAY } from '../data.js'
+import { SAY, SAY_GLYPH } from '../data.js'
 import { useKinesis } from '../engine/kinesis.jsx'
 import Board from '../ui/Board.jsx'
 
@@ -28,7 +28,7 @@ export default function Say() {
   }
 
   const items = [
-    ...SAY.map((text, i) => ({ id: `s${i}`, area: `s${i}`, kind: 'phrase', label: text, onSelect: () => say(text) })),
+    ...SAY.map((text, i) => ({ id: `s${i}`, area: `s${i}`, kind: 'phrase', glyph: SAY_GLYPH[i], label: text, onSelect: () => say(text) })),
     { id: 'back', area: 'back', kind: 'quiet', glyph: 'back', label: 'Back', onSelect: () => go('home') },
   ]
 
