@@ -606,3 +606,30 @@ button { font: inherit; color: inherit; }
 .head.waiting .node circle { opacity: 0.55; }
 .rail-hello { flex-shrink: 0; white-space: nowrap; }
 @media (max-width: 1279px) { .rail .keys-hint { display: none; } }
+
+/* Scene 2: hold a clench to say one phrase. Nothing scans or flashes. */
+.holdsay { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.7fr 1fr; grid-template-rows: 1fr auto; gap: var(--gap); }
+.hold-main {
+  position: relative; overflow: hidden; border-radius: 28px; background: var(--paper);
+  box-shadow: inset 0 0 0 6px var(--signal);
+  display: flex; flex-direction: column; justify-content: flex-end; gap: 14px; padding: 40px;
+  transition: background 400ms ease, color 400ms ease;
+}
+.hold-fill { position: absolute; inset: 0; background: var(--signal); opacity: 0.32; transform-origin: bottom; transform: scaleY(0); }
+.hold-main > :not(.hold-fill) { position: relative; }
+.hold-main .well { width: 96px; height: 96px; border-radius: 26px; }
+.hold-main .well .cell-glyph { width: 58px; height: 58px; }
+.hold-label { font-size: 76px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+.hold-hint { font-size: var(--t-m); font-weight: 600; color: var(--ink-soft); }
+.hold-main.said-now { background: var(--ink); color: var(--paper); }
+.hold-main.said-now .hold-fill { opacity: 0; }
+.hold-main.said-now .well { background: rgba(244, 194, 27, 0.14); color: var(--signal); }
+.hold-main.said-now .hold-hint { color: #b8c3c5; }
+.hold-rest { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-rows: 1fr; gap: var(--gap); }
+.hold-rest li {
+  display: flex; align-items: center; gap: 16px; padding: 0 24px; border-radius: 20px;
+  box-shadow: inset 0 0 0 3px var(--mineral-deep); font-size: var(--t-m); font-weight: 600; color: var(--ink-soft);
+}
+.hold-rest .cell-glyph { width: 34px; height: 34px; }
+.hold-said { grid-column: 1 / -1; }
+@media (max-width: 700px) { .holdsay { grid-template-columns: 1fr; } .hold-label { font-size: 48px; } }

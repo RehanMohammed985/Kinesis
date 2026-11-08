@@ -26,6 +26,15 @@ export function unlockAudio() {
   }
 }
 
+// Fetch a phrase ahead of time so it plays the instant it is chosen.
+export async function preload(text) {
+  if (!text || memo.has(text)) return
+  try {
+    const r = await fetch('/api/speak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
+    if (r.ok) memo.set(text, URL.createObjectURL(await r.blob()))
+  } catch { /* plays on demand instead */ }
+}
+
 export async function speakAsUser(text) {
   if (!text) return
   stopAll()

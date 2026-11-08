@@ -62,13 +62,14 @@ export function KinesisProvider({ children }) {
 
   useEffect(() => {
     if (!SCENE) return
+    if (SCENE !== '1') { setPlug({ plugged: true }); return } // later scenes: headset already on
     const es = new EventSource('/api/plug/stream')
     es.onmessage = (e) => { try { setPlug(JSON.parse(e.data)) } catch { /* ignore */ } }
     const key = (e) => { if (e.key.toLowerCase() === 'p') setPlug({ plugged: true, manual: true }) }
     window.addEventListener('keydown', key)
     return () => { es.close(); window.removeEventListener('keydown', key) }
   }, [])
-  const perform = useCallback((input) => performRef.current(input), [])
+  const perform = useCallback((...a) => performRef.current(...a), [])
 
   const emit = useCallback((msg) => {
     if (msg.type === 'event') firedRef.current[LEVEL_KEY[msg.input] || msg.input] = performance.now()
@@ -163,9 +164,10 @@ export function KinesisProvider({ children }) {
     let quietUntil = 0
 
     // scripted inputs for scene mode, drawn on the signal strip like the real thing
-    performRef.current = (input) => {
+    performRef.current = (input, ms) => {
       const now = performance.now()
       if (input === 'clench') clenchUntil = now + 550
+      if (input === 'hold') { quietUntil = now + (ms || 2000) + 400; clenchUntil = now + (ms || 2000) }
       if (input === 'blink2') {
         levelsRef.current.blink = 1.25
         setTimeout(() => { levelsRef.current.blink = 1.25; emit({ type: 'event', input: 'blink2' }) }, 220)
@@ -180,7 +182,7 @@ export function KinesisProvider({ children }) {
 
     const down = (e) => {
       if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return
-      const k = e.key.toLowerCase()
+      const k = e.key === ' ' ? 'c' : e.key.toLowerCase()
       if (k === '?' || (k === '/' && e.shiftKey)) { setShowKeys((v) => !v); return }
       if (k === 's') { setSpokenScan((v) => !v); return }
       if (k === 'x') { demoRef.current?.(); return }
@@ -202,7 +204,7 @@ export function KinesisProvider({ children }) {
         emit({ type: 'event', input: 'look', target })
       }
     }
-    const up = (e) => held.delete(e.key.toLowerCase())
+    const up = (e) => held.delete(e.key === ' ' ? 'c' : e.key.toLowerCase())
     window.addEventListener('keydown', down)
     window.addEventListener('keyup', up)
 
